@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Contacter le vendeur · helloBiz{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:32px;padding-bottom:40px;max-width:560px">
+
+  <a href="/annonce/{{ ann.slug }}" style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:16px">← Retour à l'annonce</a>
+
+  <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);margin-bottom:16px">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Votre message concerne :</div>
+    <div style="font-weight:700;font-size:15px">📢 {{ ann.titre }}</div>
+    <div style="font-size:13px;color:var(--primary);margin-top:2px">Boutique : {{ ann.boutique_nom }}</div>
+  </div>
+
+  <form method="POST" style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow)">
+    <h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Envoyer un message</h2>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Votre message *</label>
+      <textarea name="contenu" required rows="5" placeholder="Bonjour, je suis intéressé par votre annonce. Pouvez-vous me donner plus d'informations ?"
+        style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:14px;resize:vertical;outline:none;box-sizing:border-box;font-family:inherit"
+        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+
+    <button type="submit"
+      style="width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer">
+      💬 Envoyer le message
+    </button>
+  </form>
+
+</div>
+{% endblock %}

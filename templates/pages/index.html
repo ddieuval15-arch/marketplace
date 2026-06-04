@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}helloBiz — Marketplace Congo{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-tag">Brazzaville · Pointe-Noire · et partout au Congo</div>
+  <h1>Achetez, vendez et trouvez des services<br><span>pres de chez vous</span></h1>
+  <p>{{ stats.total_annonces }} annonces actives · Particuliers et professionnels · 100% gratuit pour les visiteurs</p>
+  <form action="/recherche" method="GET" class="search-wrap">
+    <input type="text" name="q" placeholder="Que cherchez-vous ?" value="{{ request.args.get('q', '') }}">
+    <select name="ville">
+      <option value="">Toutes les villes</option>
+      {% for v in villes %}
+        <option value="{{ v.slug }}">{{ v.nom }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Rechercher</button>
+  </form>
+  <div class="city-pills">
+    <a href="/recherche" class="city-pill active">Partout au Congo</a>
+    {% for v in villes %}
+      <a href="/recherche?ville={{ v.slug }}" class="city-pill">{{ v.nom }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="stats-banner">
+  <div class="stat-item"><div class="stat-n">{{ stats.total_annonces }}</div><div class="stat-l">annonces actives</div></div>
+  <div class="stat-item"><div class="stat-n">{{ stats.total_boutiques }}</div><div class="stat-l">boutiques ouvertes</div></div>
+  <div class="stat-item"><div class="stat-n">{{ stats.total_villes }}</div><div class="stat-l">villes couvertes</div></div>
+  <div class="stat-item"><div class="stat-n">Gratuit</div><div class="stat-l">pour les visiteurs</div></div>
+</div>
+
+<div class="container" style="padding-top:40px">
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Categories</h2>
+      <a href="/categories" class="section-link">Voir toutes →</a>
+    </div>
+    <div class="cats-grid">
+      {% for cat in categories %}
+        <a href="/recherche?categorie={{ cat.slug }}" class="cat-card">
+          <div class="cat-icon"><i class="ti ti-{{ cat.icon }}"></i></div>
+          <div class="cat-label">{{ cat.nom }}</div>
+          <div class="cat-count">{{ cat.nb_annonces }} annonces</div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- BON PLAN PREMIUM avec timer -->
+  {% if bon_plan %}
+  <section class="section">
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#0d2137 100%);border-radius:var(--radius);overflow:hidden;border:2px solid var(--primary);position:relative">
+      <!-- Badge Premium -->
+      <div style="position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px">
+        ⭐ Premium
+      </div>
+      <div style="display:flex;align-items:stretch;flex-wrap:wrap">
+        {% if bon_plan.photo_url %}
+        <div style="width:220px;flex-shrink:0;min-height:160px">
+          <img src="/static/uploads/{{ bon_plan.photo_url }}" alt="{{ bon_plan.titre }}" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        {% endif %}
+        <div style="flex:1;padding:20px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:200px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--primary)">🔥 Bon plan du jour</span>
+          </div>
+          <div style="font-size:20px;font-weight:800;color:white;line-height:1.3">{{ bon_plan.titre }}</div>
+          <div style="font-size:12px;color:#94a3b8">{{ bon_plan.cat_nom }} · {{ bon_plan.ville_nom }}</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary)">
+            {% if bon_plan.prix and bon_plan.prix > 0 %}
+              {{ "{:,.0f}".format(bon_plan.prix).replace(',', ' ') }} FCFA{% if bon_plan.prix_type == 'mois' %}<span style="font-size:14px;color:#94a3b8">/mois</span>{% endif %}
+            {% else %}
+              <span style="font-size:16px;color:#94a3b8">Prix a negocier</span>
+            {% endif %}
+          </div>
+          <!-- Timer countdown -->
+          {% if bon_plan.bon_plan_expire %}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#f59e0b;font-weight:600">⏱ Expire dans :</span>
+            <div id="bp-timer" data-expire="{{ bon_plan.bon_plan_expire }}"
+              style="display:flex;gap:6px;align-items:center">
+              <span class="bp-unit" id="bp-h" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:32px;text-align:center">--</span>
+              <span style="color:#f59e0b;font-weight:700">:</span>
+              <span class="bp-unit" id="bp-m" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:32px;text-align:center">--</span>
+              <span style="color:#f59e0b;font-weight:700">:</span>
+              <span class="bp-unit" id="bp-s" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:32px;text-align:center">--</span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px;gap:10px;flex-shrink:0">
+          <a href="/annonce/{{ bon_plan.slug }}"
+            style="padding:12px 24px;background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:14px;font-weight:700;white-space:nowrap;display:block;text-align:center;transition:background .15s"
+            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+            Voir l'annonce →
+          </a>
+          <div style="font-size:10px;color:#64748b;text-align:center">Offre limitee · 24h seulement</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+  (function() {
+    var timerEl = document.getElementById('bp-timer');
+    if (!timerEl) return;
+    var expire = new Date(timerEl.getAttribute('data-expire').replace(' ', 'T'));
+    function pad(n) { return String(n).padStart(2,'0'); }
+    function tick() {
+      var now = new Date();
+      var diff = Math.max(0, Math.floor((expire - now) / 1000));
+      if (diff <= 0) {
+        document.getElementById('bp-h').textContent = '00';
+        document.getElementById('bp-m').textContent = '00';
+        document.getElementById('bp-s').textContent = '00';
+        clearInterval(iv);
+        return;
+      }
+      var h = Math.floor(diff / 3600);
+      var m = Math.floor((diff % 3600) / 60);
+      var s = diff % 60;
+      document.getElementById('bp-h').textContent = pad(h);
+      document.getElementById('bp-m').textContent = pad(m);
+      document.getElementById('bp-s').textContent = pad(s);
+    }
+    tick();
+    var iv = setInterval(tick, 1000);
+  })();
+  </script>
+  {% endif %}
+
+  <!-- ANNONCES RECENTES -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Annonces recentes</h2>
+      <a href="/annonces" class="section-link">Voir toutes →</a>
+    </div>
+    <div class="ads-grid">
+      {% for a in annonces_recentes %}
+        <div style="position:relative">
+          <a href="/annonce/{{ a.slug }}" class="ad-card">
+            <div class="ad-img">
+              {% if a.photo_url %}
+                <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+              {% else %}
+                <i class="ti ti-{{ a.cat_icon }}"></i>
+              {% endif %}
+              {% if a.boutique_plan == 'premium' %}
+                <span class="ad-badge premium">Premium</span>
+              {% elif a.boutique_plan == 'pro' %}
+                <span class="ad-badge pro">Pro</span>
+              {% endif %}
+            </div>
+            <div class="ad-body">
+              <div class="ad-title">{{ a.titre }}</div>
+              <div class="ad-price">
+                {% if a.prix_type == 'negociable' or a.prix == 0 %}
+                  <span style="font-size:12px;color:var(--text-muted)">A negocier</span>
+                {% elif a.prix_type == 'mois' %}
+                  {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA/mois
+                {% else %}
+                  {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA
+                {% endif %}
+              </div>
+              <div class="ad-meta"><i class="ti ti-map-pin" style="font-size:12px"></i>{{ a.ville_nom }}</div>
+            </div>
+          </a>
+          {% if current_vendeur %}
+          <form action="/favori/{{ a.id }}" method="POST" style="position:absolute;top:8px;right:8px">
+            <button type="submit" class="fav-btn">
+              {% if a.id in mes_favoris_ids %}❤️{% else %}🤍{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- BOUTIQUES VEDETTES -->
+  {% if boutiques_vedettes %}
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Boutiques vedettes</h2>
+      <a href="/boutiques" class="section-link">Toutes les boutiques →</a>
+    </div>
+    <div class="boutiques-grid">
+      {% for b in boutiques_vedettes %}
+        <a href="/boutique/{{ b.slug }}" class="boutique-card" style="display:block">
+          <div class="boutique-logo">{{ b.nom[0].upper() }}</div>
+          <div class="boutique-name">{{ b.nom }}</div>
+          <div class="boutique-cat">{{ b.cat_nom }}</div>
+          <span class="plan-badge {{ b.plan }}">{{ b.plan }}</span>
+          {% if b.badge_verifie %}<span style="color:var(--primary);margin-left:6px">✓</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Créer ma boutique · helloBiz{% endblock %}
+
+{% block content %}
+<div style="background:var(--bg);padding:32px 16px;min-height:80vh">
+  <div style="max-width:600px;margin:0 auto">
+
+    <!-- STEPS -->
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:28px;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:8px;flex:1">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--success);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">✓</div>
+        <span style="font-size:12px;font-weight:600;color:var(--success)">Compte créé</span>
+      </div>
+      <div style="height:2px;width:40px;background:var(--primary);flex-shrink:0"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex:1;padding:0 8px">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--primary);color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">2</div>
+        <span style="font-size:12px;font-weight:600;color:var(--primary)">Ma boutique</span>
+      </div>
+      <div style="height:2px;width:40px;background:var(--border);flex-shrink:0"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex:1;padding:0 8px">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">3</div>
+        <span style="font-size:12px;color:var(--text-muted)">1ère annonce</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:24px">
+      <h1 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px">Créez votre boutique</h1>
+      <p style="font-size:13px;color:var(--text-muted)">Bonjour <strong>{{ vendeur.nom }}</strong> — configurez votre vitrine en 2 minutes</p>
+    </div>
+
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-md)">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/creer-boutique">
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Nom de votre boutique *</label>
+          <input type="text" name="nom" required maxlength="80"
+            placeholder="Ex : Agence Natacha Immo, ElectroPro Brazza…"
+            value="{{ form.nom or '' }}"
+            style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          <div style="font-size:11px;color:var(--text-light);margin-top:4px">Ce nom apparaîtra sur votre vitrine et dans les résultats de recherche.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Catégorie *</label>
+            <select name="categorie_id" required
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;background:white"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+              <option value="">Choisir…</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if form.categorie_id == cat.id|string %}selected{% endif %}>{{ cat.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ville *</label>
+            <select name="ville_id" required
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;background:white"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+              <option value="">Choisir…</option>
+              {% for v in villes %}
+                <option value="{{ v.id }}" {% if form.ville_id == v.id|string %}selected{% endif %}>{{ v.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Description de votre boutique *</label>
+          <textarea name="description" required rows="3" maxlength="500"
+            placeholder="Décrivez vos produits/services, votre expérience, ce qui vous distingue…"
+            style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;resize:vertical"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">{{ form.description or '' }}</textarea>
+          <div id="desc-count" style="font-size:11px;color:var(--text-light);margin-top:4px;text-align:right">0 / 500</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Téléphone *</label>
+            <input type="tel" name="telephone" required
+              placeholder="(+242) 06 XXX XX XX"
+              value="{{ form.telephone or vendeur.telephone or '' }}"
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">WhatsApp *</label>
+            <input type="tel" name="whatsapp" required
+              placeholder="(+242) 06 XXX XX XX"
+              value="{{ form.whatsapp or vendeur.telephone or '' }}"
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+
+        <!-- PLAN RECAP -->
+        <div style="background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--primary-dark)">Votre plan : {{ vendeur.plan|upper if vendeur.plan else 'PRO' }}</div>
+            <div style="font-size:11px;color:var(--primary-dark);margin-top:2px">
+              {% if vendeur.plan == 'starter' %}5 annonces actives · 3 photos/annonce
+              {% elif vendeur.plan == 'pro' %}20 annonces actives · 8 photos/annonce · Mise en avant homepage
+              {% else %}Annonces illimitées · Photos illimitées · Priorité résultats · Badge vérifié{% endif %}
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:800;color:var(--primary-dark)">
+            {% if vendeur.plan == 'starter' %}2 500{% elif vendeur.plan == 'pro' %}6 000{% else %}12 000{% endif %} <span style="font-size:11px;font-weight:500">FCFA/mois</span>
+          </div>
+        </div>
+
+        <button type="submit"
+          style="width:100%;background:var(--primary);color:var(--dark);border:none;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:800;cursor:pointer"
+          onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+          Créer ma boutique et déposer ma 1ère annonce →
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ta = document.querySelector('textarea[name=description]');
+const counter = document.getElementById('desc-count');
+ta.addEventListener('input', () => { counter.textContent = ta.value.length + ' / 500'; });
+</script>
+{% endblock %}

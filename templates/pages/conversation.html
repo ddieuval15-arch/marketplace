@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Conversation · helloBiz{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:40px;max-width:680px">
+
+  <!-- Header -->
+  <div style="background:white;border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)">
+    <a href="/messages" style="color:var(--text-muted);font-size:20px;text-decoration:none">←</a>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:15px">
+        {% if conv.expediteur_id == current_vendeur.id %}{{ conv.dest_nom }}{% else %}{{ conv.exp_nom }}{% endif %}
+      </div>
+      <a href="/annonce/{{ conv.annonce_slug }}" style="font-size:12px;color:var(--primary)">
+        📢 {{ conv.annonce_titre[:45] }}{% if conv.annonce_titre|length > 45 %}…{% endif %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages-box" style="background:#f8fafc;border-left:1px solid var(--border);border-right:1px solid var(--border);padding:16px;min-height:300px;max-height:450px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+    {% if messages %}
+      {% for m in messages %}
+      <div style="display:flex;flex-direction:{% if m.auteur_id == current_vendeur.id %}row-reverse{% else %}row{% endif %};gap:8px;align-items:flex-end">
+        <div style="width:32px;height:32px;border-radius:50%;background:{% if m.auteur_id == current_vendeur.id %}var(--primary){% else %}var(--border){% endif %};color:{% if m.auteur_id == current_vendeur.id %}white{% else %}var(--text){% endif %};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">
+          {{ m.auteur_nom[:1].upper() }}
+        </div>
+        <div style="max-width:75%">
+          <div style="background:{% if m.auteur_id == current_vendeur.id %}var(--primary){% else %}white{% endif %};color:{% if m.auteur_id == current_vendeur.id %}white{% else %}var(--text){% endif %};padding:10px 14px;border-radius:{% if m.auteur_id == current_vendeur.id %}16px 16px 4px 16px{% else %}16px 16px 16px 4px{% endif %};font-size:14px;line-height:1.5;border:1px solid {% if m.auteur_id == current_vendeur.id %}transparent{% else %}var(--border){% endif %}">
+            {{ m.contenu }}
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:3px;text-align:{% if m.auteur_id == current_vendeur.id %}right{% else %}left{% endif %}">
+            {{ m.created_at[11:16] }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;color:var(--text-muted);font-size:13px;margin:auto">Démarrez la conversation !</div>
+    {% endif %}
+  </div>
+
+  <!-- Formulaire -->
+  <form method="POST" style="background:white;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);padding:12px 16px;display:flex;gap:10px;box-shadow:var(--shadow)">
+    <textarea name="contenu" placeholder="Écrivez votre message…" required rows="2"
+      style="flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;resize:none;outline:none;font-family:inherit"
+      onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.form.submit()}"></textarea>
+    <button type="submit"
+      style="padding:0 18px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-size:20px;cursor:pointer;flex-shrink:0">
+      ➤
+    </button>
+  </form>
+
+</div>
+<script>
+  const box = document.getElementById('messages-box');
+  box.scrollTop = box.scrollHeight;
+</script>
+{% endblock %}

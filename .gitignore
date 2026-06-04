@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Base de données (ne pas versionner les données locales)
+data/marketplace.db
+data/marketplace.db-journal
+
+# Uploads utilisateurs
+static/uploads/*.jpg
+static/uploads/*.jpeg
+static/uploads/*.png
+static/uploads/*.webp
+static/uploads/*.gif
+
+# Node
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Pitch deck (fichiers générés)
+helloBiz_PitchDeck_2026.pptx
+helloBiz_PitchDeck_2026.pdf
+pitch_hellobiz.js

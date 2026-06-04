@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Annuaire Entreprises · helloBiz{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:28px;padding-bottom:48px">
+
+  <!-- EN-TETE -->
+  <div style="margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <h1 style="font-size:24px;font-weight:800">🏢 Annuaire Entreprises</h1>
+    </div>
+    <p style="font-size:14px;color:var(--text-muted)">Retrouvez les entreprises et PME vérifiées sur helloBiz. Demandez un devis en quelques clics.</p>
+  </div>
+
+  {% if entreprises %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px">
+    {% for e in entreprises %}
+    <a href="/boutique/{{ e.slug }}" style="text-decoration:none;color:inherit">
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .2s;box-shadow:var(--shadow)"
+           onmouseover="this.style.borderColor='var(--primary)';this.style.transform='translateY(-2px)'"
+           onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+
+        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+          <!-- Logo -->
+          <div style="width:54px;height:54px;border-radius:12px;background:var(--primary);color:var(--dark);font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+            {% if e.logo %}
+            <img src="/static/uploads/{{ e.logo }}" alt="{{ e.nom }}" style="width:100%;height:100%;object-fit:cover">
+            {% else %}{{ e.nom[0].upper() }}{% endif %}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+              <span style="font-size:15px;font-weight:800;color:var(--text)">{{ e.nom }}</span>
+              {% if e.badge_verifie %}
+              <span style="font-size:11px;font-weight:700;color:#0a5c3b;background:#e0f7f0;padding:2px 7px;border-radius:20px">✓ Vérifié</span>
+              {% endif %}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ e.cat_nom }} · {{ e.ville_nom }}</div>
+            {% if e.secteur %}
+            <div style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px">{{ e.secteur }}</div>
+            {% endif %}
+          </div>
+          <span class="plan-badge {{ e.plan }}" style="flex-shrink:0">{{ e.plan }}</span>
+        </div>
+
+        {% if e.description %}
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+          {{ e.description }}
+        </p>
+        {% endif %}
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border-light)">
+          <div style="display:flex;gap:16px">
+            <div style="font-size:12px;color:var(--text-muted)">
+              <span style="font-weight:700;color:var(--primary)">{{ e.nb_annonces }}</span> annonce{{ 's' if e.nb_annonces != 1 else '' }}
+            </div>
+            {% if e.nb_avis > 0 %}
+            <div style="font-size:12px;color:var(--text-muted)">
+              ⭐ <span style="font-weight:700">{{ e.note_moy }}</span>/5 <span style="color:var(--text-muted)">({{ e.nb_avis }})</span>
+            </div>
+            {% endif %}
+          </div>
+          <span style="font-size:12px;font-weight:700;color:var(--primary)">Voir le profil →</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:80px 20px;color:var(--text-muted)">
+    <i class="ti ti-building" style="font-size:64px;display:block;margin-bottom:16px;opacity:.3"></i>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:8px">Aucune entreprise pour le moment</h2>
+    <p style="font-size:14px">Les entreprises avec un plan Pro ou Premium peuvent activer leur espace entreprise depuis leur dashboard.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

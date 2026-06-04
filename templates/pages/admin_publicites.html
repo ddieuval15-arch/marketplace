@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Publicités · Admin helloBiz{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:24px 16px">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <a href="/admin" style="font-size:13px;color:var(--text-muted)">← Dashboard Admin</a>
+      <h1 style="font-size:20px;font-weight:800;margin-top:4px">Espaces Publicitaires</h1>
+    </div>
+    <a href="/admin/publicites/ajouter"
+       style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:var(--primary);color:white;border-radius:var(--radius-sm);font-weight:700;font-size:14px;text-decoration:none">
+      <i class="ti ti-plus"></i> Nouvelle publicité
+    </a>
+  </div>
+
+  {% if pubs %}
+  <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:var(--bg-light)">
+          <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Annonceur</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Aperçu</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Emplacement</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Période</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Montant</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Stats</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Statut</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pubs %}
+        <tr style="border-top:1px solid var(--border)">
+          <td style="padding:10px 14px">
+            <div style="font-weight:700">{{ p.annonceur }}</div>
+            {% if p.titre %}<div style="font-size:11px;color:var(--text-muted)">{{ p.titre }}</div>{% endif %}
+            <a href="{{ p.lien }}" target="_blank" style="font-size:11px;color:var(--primary)">{{ p.lien[:40] }}…</a>
+          </td>
+          <td style="padding:10px 14px;text-align:center">
+            <img src="/static/uploads/{{ p.image_url }}" alt="{{ p.annonceur }}"
+                 style="height:48px;max-width:120px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">
+          </td>
+          <td style="padding:10px 14px;text-align:center">
+            <span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;background:#e0f2fe;color:#0369a1">
+              {% if p.emplacement == 'banniere_top' %}① Top
+              {% elif p.emplacement == 'sidebar' %}② Sidebar
+              {% elif p.emplacement == 'mid_page' %}③ Mid-page
+              {% else %}④ Sponsorisée{% endif %}
+            </span>
+          </td>
+          <td style="padding:10px 14px;text-align:center;font-size:12px">
+            <div>{{ p.date_debut }}</div>
+            <div style="color:var(--text-muted)">→ {{ p.date_fin }}</div>
+          </td>
+          <td style="padding:10px 14px;text-align:center;font-weight:700;color:var(--primary-dark)">
+            {{ "{:,}".format(p.montant|int).replace(",", " ") }} F
+          </td>
+          <td style="padding:10px 14px;text-align:center;font-size:12px">
+            <div><i class="ti ti-eye" style="color:var(--text-muted)"></i> {{ p.impressions }}</div>
+            <div><i class="ti ti-cursor-text" style="color:var(--primary)"></i> {{ p.clics }} clics</div>
+          </td>
+          <td style="padding:10px 14px;text-align:center">
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+              background:{% if p.statut=='active' %}#e0f7f0{% else %}#fde8e8{% endif %};
+              color:{% if p.statut=='active' %}#0a5c3b{% else %}#7b1c1c{% endif %}">
+              {% if p.statut=='active' %}✓ Active{% else %}Inactive{% endif %}
+            </span>
+          </td>
+          <td style="padding:10px 14px;text-align:center">
+            <div style="display:flex;gap:6px;justify-content:center">
+              <form action="/admin/publicites/{{ p.id }}/toggle" method="POST" style="display:inline">
+                <button type="submit" style="padding:4px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid;
+                  {% if p.statut=='active' %}background:#fef2f2;color:#dc2626;border-color:#fca5a5{% else %}background:#e0f7f0;color:#059669;border-color:#6ee7b7{% endif %}">
+                  {% if p.statut=='active' %}Désactiver{% else %}Activer{% endif %}
+                </button>
+              </form>
+              <form action="/admin/publicites/{{ p.id }}/supprimer" method="POST" style="display:inline">
+                <button type="submit" onclick="return confirm('Supprimer cette publicité ?')"
+                  style="padding:4px 8px;border:1px solid #fca5a5;border-radius:var(--radius-sm);font-size:11px;color:#dc2626;background:#fef2f2;cursor:pointer">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px;background:white;border:1px solid var(--border);border-radius:var(--radius)">
+    <i class="ti ti-ad" style="font-size:48px;color:var(--border);display:block;margin-bottom:12px"></i>
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px">Aucune publicité pour l'instant</div>
+    <a href="/admin/publicites/ajouter" style="color:var(--primary);font-weight:600">+ Ajouter la première publicité</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

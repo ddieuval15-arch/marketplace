@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Paiement Mobile Money · helloBiz{% endblock %}
+
+{% block content %}
+<div style="max-width:520px;margin:40px auto;padding:0 16px">
+
+  <!-- En-tête -->
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Paiement sécurisé</div>
+    <h1 style="font-size:22px;font-weight:800;color:var(--text)">
+      {% if type == 'upgrade' %}Passer au plan {{ tarif.nom }}
+      {% else %}Booster mon annonce{% endif %}
+    </h1>
+    <div style="font-size:28px;font-weight:900;color:var(--primary);margin-top:8px">
+      {{ "{:,}".format(montant|int).replace(",", " ") }} FCFA
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:4px">{{ description }}</div>
+  </div>
+
+  <!-- Résumé -->
+  {% if type == 'upgrade' %}
+  <div style="background:var(--bg-light);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px">
+    <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px">Ce que vous obtenez</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px">
+        <i class="ti ti-check" style="color:var(--primary);font-size:16px"></i>
+        <span><strong>{{ tarif.annonces }}</strong> annonces actives simultanées</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px">
+        <i class="ti ti-check" style="color:var(--primary);font-size:16px"></i>
+        <span><strong>{{ tarif.photos }}</strong> photos par annonce</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px">
+        <i class="ti ti-check" style="color:var(--primary);font-size:16px"></i>
+        <span>Badge plan {{ tarif.nom }} sur votre boutique</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Formulaire paiement -->
+  <form action="/paiement/initier" method="POST">
+    <input type="hidden" name="type" value="{{ type }}">
+    <input type="hidden" name="montant" value="{{ montant }}">
+    {% if type == 'upgrade' %}<input type="hidden" name="plan" value="{{ plan }}">{% endif %}
+    {% if type == 'boost' %}<input type="hidden" name="annonce_id" value="{{ annonce.id }}">{% endif %}
+
+    <!-- Choix opérateur -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Choisissez votre opérateur</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+        <label style="cursor:pointer">
+          <input type="radio" name="operateur" value="mtn" required style="display:none" id="op-mtn">
+          <div class="op-card" id="card-mtn" onclick="selectOp('mtn')"
+               style="border:2px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:all .2s">
+            <img src="/static/images/MTN-MOMO.jpg" alt="MTN MoMo" style="width:64px;height:64px;object-fit:contain;margin:0 auto 8px;display:block">
+            <div style="font-weight:700;font-size:14px">MTN MoMo</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Mobile Money</div>
+          </div>
+        </label>
+
+        <label style="cursor:pointer">
+          <input type="radio" name="operateur" value="airtel" required style="display:none" id="op-airtel">
+          <div class="op-card" id="card-airtel" onclick="selectOp('airtel')"
+               style="border:2px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:all .2s">
+            <img src="/static/images/airtel-app-logo.webp" alt="Airtel Money" style="width:64px;height:64px;object-fit:contain;margin:0 auto 8px;display:block">
+            <div style="font-weight:700;font-size:14px">Airtel Money</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Mobile Money</div>
+          </div>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- Numéro de téléphone -->
+    <div style="margin-bottom:24px">
+      <label style="font-size:13px;font-weight:700;color:var(--text);display:block;margin-bottom:8px">
+        Numéro Mobile Money
+      </label>
+      <div style="position:relative">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-muted);font-weight:600">+242</span>
+        <input type="tel" name="telephone" placeholder="06 XXX XX XX" required
+               style="width:100%;padding:12px 14px 12px 58px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;outline:none;box-sizing:border-box"
+               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px">
+        <i class="ti ti-info-circle"></i> Le numéro doit avoir le solde suffisant pour valider la transaction.
+      </div>
+    </div>
+
+    <!-- Bouton payer -->
+    <button type="submit" id="btn-pay"
+            style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s">
+      <i class="ti ti-lock"></i> Payer {{ "{:,}".format(montant|int).replace(",", " ") }} FCFA
+    </button>
+
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text-muted)">
+      <i class="ti ti-shield-check" style="color:var(--primary)"></i>
+      Transaction sécurisée · Référence générée automatiquement
+    </div>
+  </form>
+
+</div>
+
+<style>
+.op-card:hover { border-color: var(--primary) !important; }
+.op-card.selected { border-color: var(--primary) !important; background: var(--primary-light); }
+</style>
+
+<script>
+function selectOp(op) {
+  document.querySelectorAll('.op-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + op).classList.add('selected');
+  document.getElementById('op-' + op).checked = true;
+}
+</script>
+{% endblock %}

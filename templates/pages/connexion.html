@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Se connecter · helloBiz{% endblock %}
+{% block content %}
+<div style="min-height:90vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;background:var(--bg)">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:32px">
+      <a href="/" style="display:inline-flex;align-items:baseline;gap:0;font-size:28px;font-weight:700;margin-bottom:20px">
+        <span style="color:var(--text)">hello</span><span style="color:var(--primary)">Biz</span>
+      </a>
+      <h1 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px">Bon retour</h1>
+      <p style="font-size:13px;color:var(--text-muted)">Connectez-vous a votre espace vendeur</p>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+      <form method="POST" action="/connexion">
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" required autofocus placeholder="votre@email.com" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="form-label">Mot de passe</label>
+          <div style="position:relative">
+            <input type="password" name="password" id="pwd-login" required placeholder="••••••" class="form-control" style="padding-right:44px">
+            <button type="button" onclick="togglePwd('pwd-login','eye-login')"
+              style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px">
+              <i class="ti ti-eye" id="eye-login"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="font-size:15px;padding:14px">Se connecter</button>
+      </form>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text-muted)">Pas encore de compte ?</span>
+        <a href="/inscription" style="font-size:13px;color:var(--primary);font-weight:600;margin-left:6px">Creer mon compte →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

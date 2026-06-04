@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Confirmation en cours · helloBiz{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;margin:40px auto;padding:0 16px;text-align:center">
+
+  <!-- Icône opérateur -->
+  <div style="width:80px;height:80px;margin:0 auto 20px;">
+    {% if operateur == 'mtn' %}
+    <img src="/static/images/MTN-MOMO.jpg" alt="MTN MoMo" style="width:80px;height:80px;object-fit:contain">
+    {% else %}
+    <img src="/static/images/airtel-app-logo.webp" alt="Airtel Money" style="width:80px;height:80px;object-fit:contain">
+    {% endif %}
+  </div>
+
+  <h1 style="font-size:20px;font-weight:800;margin-bottom:8px">Demande envoyée !</h1>
+  <p style="color:var(--text-muted);font-size:14px;line-height:1.6;margin-bottom:24px">
+    Une demande de paiement a été envoyée sur le numéro<br>
+    <strong style="color:var(--text)">+242 {{ telephone }}</strong><br>
+    Validez le paiement sur votre téléphone, puis cliquez sur le bouton ci-dessous.
+  </p>
+
+  <!-- Résumé transaction -->
+  <div style="background:var(--bg-light);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:24px;text-align:left">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+      <span style="color:var(--text-muted)">Référence</span>
+      <strong style="font-family:monospace;color:var(--primary)">{{ reference }}</strong>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px">
+      <span style="color:var(--text-muted)">Opérateur</span>
+      <strong>{% if operateur == 'mtn' %}MTN MoMo{% else %}Airtel Money{% endif %}</strong>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:14px">
+      <span style="color:var(--text-muted)">Montant</span>
+      <strong style="color:var(--primary)">{{ "{:,}".format(montant|int).replace(",", " ") }} FCFA</strong>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:var(--radius);padding:14px 18px;margin-bottom:24px;text-align:left">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">
+      <i class="ti ti-bulb" style="color:#F5A623"></i>
+      {% if operateur == 'mtn' %}Comment confirmer sur MTN MoMo{% else %}Comment confirmer sur Airtel Money{% endif %}
+    </div>
+    {% if operateur == 'mtn' %}
+    <ol style="font-size:13px;color:var(--text-muted);margin:0;padding-left:18px;line-height:1.8">
+      <li>Composez <strong>*105#</strong> sur votre téléphone MTN</li>
+      <li>Entrez votre code PIN MoMo</li>
+      <li>Validez la demande de paiement de <strong>{{ "{:,}".format(montant|int).replace(",", " ") }} FCFA</strong></li>
+    </ol>
+    {% else %}
+    <ol style="font-size:13px;color:var(--text-muted);margin:0;padding-left:18px;line-height:1.8">
+      <li>Composez <strong>*128#</strong> sur votre téléphone Airtel</li>
+      <li>Entrez votre code PIN Airtel Money</li>
+      <li>Validez la demande de paiement de <strong>{{ "{:,}".format(montant|int).replace(",", " ") }} FCFA</strong></li>
+    </ol>
+    {% endif %}
+  </div>
+
+  <!-- Bouton confirmation -->
+  <form action="/paiement/confirmer/{{ reference }}" method="POST">
+    <button type="submit"
+            style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px">
+      <i class="ti ti-check"></i> J'ai validé le paiement
+    </button>
+  </form>
+
+  <a href="{{ url_for('dashboard') }}" style="font-size:13px;color:var(--text-muted)">
+    Annuler et retourner au tableau de bord
+  </a>
+
+</div>
+{% endblock %}

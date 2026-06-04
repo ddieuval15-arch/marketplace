@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Statistiques · helloBiz{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:48px">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:800">📊 Statistiques</h1>
+      <div style="font-size:13px;color:var(--text-muted)">{{ boutique.nom }}</div>
+    </div>
+    <a href="/dashboard" style="font-size:13px;color:var(--primary);font-weight:600">← Mon espace</a>
+  </div>
+
+  <!-- KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Vues totales</div>
+      <div style="font-size:30px;font-weight:900;color:var(--primary)">{{ annonces|sum(attribute='vues') }}</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Favoris reçus</div>
+      <div style="font-size:30px;font-weight:900;color:#e53e3e">{{ nb_favoris }}</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Messages reçus</div>
+      <div style="font-size:30px;font-weight:900;color:#3b82f6">{{ nb_messages }}</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">CA ce mois</div>
+      <div style="font-size:22px;font-weight:900;color:#059669">{{ "{:,}".format(ca_mois|int).replace(",", " ") }}</div>
+      <div style="font-size:10px;color:var(--text-muted)">FCFA</div>
+    </div>
+    <div style="background:var(--primary);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.8);text-transform:uppercase;margin-bottom:6px">CA total</div>
+      <div style="font-size:22px;font-weight:900;color:white">{{ "{:,}".format(ca_total|int).replace(",", " ") }}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.7)">FCFA</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+
+    <!-- Graphique vues par semaine -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px">Vues par semaine</div>
+      <canvas id="chartSemaines" height="180"></canvas>
+    </div>
+
+    <!-- Graphique vues 28 jours -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px">Vues des 28 derniers jours</div>
+      <canvas id="chart28j" height="180"></canvas>
+    </div>
+
+  </div>
+
+  <!-- Top annonces -->
+  <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px">Performance des annonces</div>
+    {% if annonces %}
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg-light)">
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">#</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Annonce</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Vues</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Statut</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Popularité</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set max_vues = annonces[0].vues if annonces else 1 %}
+          {% for a in annonces %}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:10px 14px;font-weight:700;color:var(--text-muted)">{{ loop.index }}</td>
+            <td style="padding:10px 14px">
+              <a href="/annonce/{{ a.slug }}" style="font-weight:600;color:var(--text)">{{ a.titre[:45] }}{% if a.titre|length > 45 %}…{% endif %}</a>
+              <div style="font-size:11px;color:var(--text-muted)">{{ a.cat_nom }}</div>
+            </td>
+            <td style="padding:10px 14px;text-align:center;font-weight:700;color:var(--primary)">{{ a.vues }}</td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+                background:{% if a.statut=='active' %}#e0f7f0{% elif a.statut=='supprime' %}#fde8e8{% else %}#fef3c7{% endif %};
+                color:{% if a.statut=='active' %}#0a5c3b{% elif a.statut=='supprime' %}#7b1c1c{% else %}#854d0e{% endif %}">
+                {{ a.statut|capitalize }}
+              </span>
+            </td>
+            <td style="padding:10px 14px;min-width:120px">
+              <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+                <div style="background:var(--primary);height:100%;border-radius:4px;width:{% if max_vues > 0 %}{{ ((a.vues / max_vues) * 100)|int }}{% else %}0{% endif %}%"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:30px;color:var(--text-muted)">Aucune annonce publiée.</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// Graphique vues par semaine
+const semaines = {{ semaines|tojson }};
+new Chart(document.getElementById('chartSemaines'), {
+  type: 'bar',
+  data: {
+    labels: semaines.map(s => s.label),
+    datasets: [{
+      label: 'Vues',
+      data: semaines.map(s => s.vues),
+      backgroundColor: 'rgba(0, 183, 170, 0.7)',
+      borderColor: '#00b7aa',
+      borderWidth: 2,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+  }
+});
+
+// Graphique 28 jours
+const vues28j = {{ vues_28j|tojson }};
+const labels28 = vues28j.map(v => v.date.slice(5));
+const data28   = vues28j.map(v => v.total);
+new Chart(document.getElementById('chart28j'), {
+  type: 'line',
+  data: {
+    labels: labels28.length ? labels28 : ['Pas encore de données'],
+    datasets: [{
+      label: 'Vues',
+      data: data28.length ? data28 : [0],
+      borderColor: '#00b7aa',
+      backgroundColor: 'rgba(0, 183, 170, 0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+  }
+});
+</script>
+{% endblock %}

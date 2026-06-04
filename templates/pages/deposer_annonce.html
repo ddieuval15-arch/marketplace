@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Déposer une annonce · helloBiz{% endblock %}
+
+{% block head %}
+<style>
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--surface);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.upload-zone i { font-size: 36px; color: var(--primary); display: block; margin-bottom: 8px; }
+.photo-previews { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+@media (max-width:640px) { .photo-previews { grid-template-columns: repeat(2, 1fr); } }
+.photo-thumb {
+  position: relative; aspect-ratio: 4/3;
+  border-radius: var(--radius-sm); overflow: hidden;
+  border: 2px solid var(--border);
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb .remove-btn {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,.6); color: white;
+  border: none; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+.photo-thumb.principal { border-color: var(--primary); }
+.photo-thumb.principal::after {
+  content: 'Principale';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--primary); color: var(--dark);
+  font-size: 9px; font-weight: 700; text-align: center; padding: 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--bg);padding:40px 16px;min-height:80vh;position:relative">
+  <div style="max-width:680px;margin:0 auto">
+
+    <div style="text-align:center;margin-bottom:24px">
+      <h1 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px">Déposer une annonce</h1>
+      <p style="font-size:13px;color:var(--text-muted)">
+        Boutique : <strong>{{ boutique.nom }}</strong> ·
+        <span style="color:var(--text-light)">{{ annonces_restantes }} annonce{{ 's' if annonces_restantes > 1 }} disponible{{ 's' if annonces_restantes > 1 }}</span>
+      </p>
+    </div>
+
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/deposer-annonce" enctype="multipart/form-data">
+
+        <!-- TITRE -->
+        <div style="margin-bottom:16px">
+          <label class="field-label">Titre de l'annonce *</label>
+          <input type="text" name="titre" required maxlength="120"
+            placeholder="Ex : Villa F4 meublée à Ngoyo · Samsung Galaxy S24 Ultra…"
+            value="{{ form.titre or '' }}"
+            class="field-input">
+        </div>
+
+        <!-- CATEGORIE + VILLE -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div>
+            <label class="field-label">Catégorie *</label>
+            <select name="categorie_id" required id="select-categorie"
+              class="field-input" onchange="toggleEmploiFields(this)">
+              <option value="">Choisir…</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" data-slug="{{ cat.slug }}" {% if form.categorie_id == cat.id|string or boutique.categorie_id == cat.id %}selected{% endif %}>{{ cat.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Ville *</label>
+            <select name="ville_id" id="select-ville" required onchange="updateQuartiers(this.value)"
+              class="field-input">
+              <option value="">Choisir…</option>
+              {% for v in villes %}
+                <option value="{{ v.id }}" {% if form.ville_id == v.id|string or boutique.ville_id == v.id %}selected{% endif %}>{{ v.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- QUARTIER -->
+        <div style="margin-bottom:16px">
+          <label class="field-label">
+            Quartier <span style="font-weight:400;color:var(--text-muted)">(optionnel mais recommandé)</span>
+          </label>
+          <select name="quartier_id" id="select-quartier"
+            class="field-input">
+            <option value="">Sélectionnez d'abord une ville</option>
+            {% for q in quartiers %}
+              <option value="{{ q.id }}" data-ville="{{ q.ville_id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div style="margin-bottom:16px">
+          <label class="field-label">Description *</label>
+          <textarea name="description" required rows="5" maxlength="2000"
+            placeholder="Décrivez votre produit ou service en détail : état, caractéristiques, conditions de vente, livraison possible…"
+            class="field-input" style="resize:vertical">{{ form.description or '' }}</textarea>
+        </div>
+
+        <!-- CHAMPS EMPLOI -->
+        <div id="emploi-fields" style="display:none;background:var(--primary-light);border:1px solid rgba(0,183,170,.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:12px">
+            <i class="ti ti-briefcase"></i> Informations spécifiques Emploi
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label class="field-label">Type d'annonce *</label>
+              <select name="emploi_type" id="emploi_type" class="field-input">
+                <option value="">Choisir…</option>
+                <option value="offre" {% if form.emploi_type == 'offre' %}selected{% endif %}>📋 Offre d'emploi (je recrute)</option>
+                <option value="recherche" {% if form.emploi_type == 'recherche' %}selected{% endif %}>👤 Recherche d'emploi (je cherche)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Secteur d'activité *</label>
+              <select name="emploi_secteur" id="emploi_secteur" class="field-input">
+                <option value="">Choisir…</option>
+                {% for secteur in ['Commerce / Vente','BTP / Travaux','Informatique / Tech','Transport / Logistique','Hôtellerie / Restauration','Santé / Médical','Éducation / Formation','Comptabilité / Finance','Sécurité','Nettoyage / Services','Administration','Autre'] %}
+                <option value="{{ secteur }}" {% if form.emploi_secteur == secteur %}selected{% endif %}>{{ secteur }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Salaire <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label>
+            <input type="text" name="emploi_salaire" class="field-input"
+              placeholder="Ex : 150 000 FCFA/mois · À négocier · Selon profil"
+              value="{{ form.emploi_salaire or '' }}" maxlength="100">
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text-muted);padding:8px 10px;background:white;border-radius:var(--radius-sm)">
+            ⏱ Expire automatiquement après <strong>30 jours</strong> · Max 2 photos · Pas de liens externes ni de publicité
+          </div>
+        </div>
+
+        <!-- PRIX -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div>
+            <label class="field-label">Prix (FCFA)</label>
+            <input type="number" name="prix" min="0" step="500" id="prix-input"
+              placeholder="0 = à négocier" value="{{ form.prix or '' }}"
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div>
+            <label class="field-label">Type</label>
+            <select name="prix_type" id="prix-type"
+              class="field-input">
+              <option value="fixe">Prix fixe</option>
+              <option value="mois">Par mois (location)</option>
+              <option value="negociable">À négocier</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="prix-apercu" style="background:rgba(0,183,170,.1);border:1px solid rgba(0,183,170,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:16px;font-size:13px;color:var(--primary);font-weight:600;display:none">
+          Affichage : <span id="prix-affiche"></span>
+        </div>
+
+        <!-- PHOTOS UPLOAD -->
+        <div style="margin-bottom:24px">
+          <label class="field-label">
+            Photos <span style="font-weight:400;color:var(--text-muted)">(max {{ max_photos }} · JPG, PNG, WEBP)</span>
+          </label>
+
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photos-input').click()">
+            <i class="ti ti-photo-plus"></i>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Cliquez pour ajouter des photos</div>
+            <div style="font-size:12px;color:var(--text-muted)">ou glissez-déposez vos fichiers ici · Max {{ max_photos }} photos</div>
+          </div>
+          <input type="file" name="photos" id="photos-input" multiple accept="image/*"
+            style="display:none" onchange="previewPhotos(this)">
+
+          <div class="photo-previews" id="photo-previews"></div>
+
+          <div style="font-size:11px;color:var(--text-light);margin-top:8px">
+            <i class="ti ti-info-circle" style="font-size:13px;color:var(--primary)"></i>
+            La 1ère photo sera la photo principale de votre annonce. Les images sont redimensionnées automatiquement.
+          </div>
+        </div>
+
+        <button type="submit"
+          style="width:100%;background:var(--primary);color:var(--dark);border:none;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:800;cursor:pointer"
+          onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+          <i class="ti ti-speakerphone"></i> Publier l'annonce →
+        </button>
+
+      </form>
+    </div>
+
+    <div style="text-align:center;margin-top:14px">
+      <a href="/dashboard" style="font-size:13px;color:var(--text-muted)">← Revenir à mon tableau de bord</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEmploiFields(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const isEmploi = opt && opt.dataset.slug === 'emploi';
+  const block = document.getElementById('emploi-fields');
+  block.style.display = isEmploi ? 'block' : 'none';
+  // Rendre requis ou non
+  document.getElementById('emploi_type').required    = isEmploi;
+  document.getElementById('emploi_secteur').required = isEmploi;
+}
+// Init si catégorie déjà sélectionnée
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('select-categorie');
+  if (sel) toggleEmploiFields(sel);
+});
+
+function updateQuartiers(villeId) {
+  const sel = document.getElementById('select-quartier');
+  const opts = sel.querySelectorAll('option[data-ville]');
+  sel.querySelector('option:first-child').textContent = 'Choisir un quartier…';
+  opts.forEach(opt => {
+    opt.style.display = opt.dataset.ville === villeId ? '' : 'none';
+  });
+  sel.value = '';
+}
+// Init au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  const ville = document.getElementById('select-ville');
+  if (ville && ville.value) updateQuartiers(ville.value);
+});
+
+const MAX_PHOTOS = {{ max_photos }};
+let selectedFiles = [];
+
+function previewPhotos(input) {
+  const files = Array.from(input.files);
+  if (selectedFiles.length + files.length > MAX_PHOTOS) {
+    alert('Maximum ' + MAX_PHOTOS + ' photos autorisées.');
+    return;
+  }
+  files.forEach((file, i) => {
+    if (!file.type.startsWith('image/')) return;
+    selectedFiles.push(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const idx = selectedFiles.length - 1;
+      const div = document.createElement('div');
+      div.className = 'photo-thumb' + (idx === 0 ? ' principal' : '');
+      div.dataset.idx = idx;
+      div.innerHTML = `
+        <img src="${e.target.result}" alt="photo">
+        <button type="button" class="remove-btn" onclick="removePhoto(${idx})">×</button>`;
+      document.getElementById('photo-previews').appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+  rebuildFileInput();
+}
+
+function removePhoto(idx) {
+  selectedFiles.splice(idx, 1);
+  rebuildPreviews();
+  rebuildFileInput();
+}
+
+function rebuildPreviews() {
+  const container = document.getElementById('photo-previews');
+  container.innerHTML = '';
+  selectedFiles.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'photo-thumb' + (idx === 0 ? ' principal' : '');
+      div.innerHTML = `<img src="${e.target.result}" alt="photo"><button type="button" class="remove-btn" onclick="removePhoto(${idx})">×</button>`;
+      container.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+    });
+  });
+}
+
+function rebuildFileInput() {
+  const dt = new DataTransfer();
+  selectedFiles.forEach(f => dt.items.add(f));
+  document.getElementById('photos-input').files = dt.files;
+}
+
+// Drag & drop
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag-over');
+  const input = document.getElementById('photos-input');
+  const dt = new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+  input.files = dt.files;
+  previewPhotos(input);
+});
+
+// Aperçu prix
+function updatePrixApercu() {
+  const prix = parseFloat(document.getElementById('prix-input').value) || 0;
+  const type = document.getElementById('prix-type').value;
+  const div  = document.getElementById('prix-apercu');
+  const span = document.getElementById('prix-affiche');
+  if (type === 'negociable' || prix === 0) {
+    span.textContent = 'À négocier';
+  } else {
+    const fmt = new Intl.NumberFormat('fr-FR').format(prix);
+    span.textContent = fmt + ' FCFA' + (type === 'mois' ? ' / mois' : '');
+  }
+  div.style.display = 'block';
+}
+document.getElementById('prix-input').addEventListener('input', updatePrixApercu);
+document.getElementById('prix-type').addEventListener('change', updatePrixApercu);
+</script>
+{% endblock %}

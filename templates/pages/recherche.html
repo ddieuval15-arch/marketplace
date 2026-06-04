@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if q %}{{ q }} — {% endif %}
+  {% if ville_nom %}{{ ville_nom }} — {% endif %}
+  Recherche · helloBiz
+{% endblock %}
+
+{% block content %}
+<!-- SEARCH BAR INLINE -->
+<div style="background:var(--dark);padding:16px 20px;border-bottom:2px solid #1a1a1a">
+  <div style="max-width:1100px;margin:0 auto">
+    <form action="/recherche" method="GET" class="search-wrap" style="max-width:100%">
+      <input type="text" name="q" placeholder="Que cherchez-vous ?" value="{{ q or '' }}">
+      <select name="ville">
+        <option value="">Toutes les villes</option>
+        {% for v in villes %}
+          <option value="{{ v.slug }}" {% if ville_slug == v.slug %}selected{% endif %}>{{ v.nom }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">→</button>
+      {% if categorie_slug %}
+        <input type="hidden" name="categorie" value="{{ categorie_slug }}">
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="container">
+  <div class="search-page">
+
+    <!-- FILTERS SIDEBAR -->
+    <aside class="filters-panel">
+      <div class="filter-title">Filtrer les résultats</div>
+
+      <div class="filter-group">
+        <label>Ville</label>
+        <select id="filtre-ville" onchange="applyVille(this.value)">
+          <option value="">Toutes les villes</option>
+          {% for v in villes %}
+            <option value="{{ v.slug }}" {% if ville_slug == v.slug %}selected{% endif %}>{{ v.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group" id="filtre-quartier-group">
+        <label>Quartier</label>
+        <select id="filtre-quartier" onchange="applyFilter('quartier', this.value)">
+          <option value="">Tous les quartiers</option>
+          {% for q in quartiers %}
+            {% if not ville_slug or q.ville_id == villes|selectattr('slug','eq',ville_slug)|map(attribute='id')|first %}
+            <option value="{{ q.slug }}" {% if quartier_slug == q.slug %}selected{% endif %}>{{ q.nom }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Catégorie</label>
+        <div class="filter-cats">
+          <div class="filter-cat {% if not categorie_slug %}active{% endif %}"
+               onclick="applyFilter('categorie', '')">
+            <i class="ti ti-grid-dots" style="font-size:14px;color:var(--primary)"></i> Toutes
+          </div>
+          {% for cat in categories %}
+            <div class="filter-cat {% if categorie_slug == cat.slug %}active{% endif %}"
+                 onclick="applyFilter('categorie', '{{ cat.slug }}')">
+              <i class="ti ti-{{ cat.icon }}" style="font-size:14px;color:var(--primary)"></i>
+              {{ cat.nom }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Prix minimum (FCFA)</label>
+        <input type="number" id="prix-min" placeholder="0" value="{{ prix_min or '' }}">
+      </div>
+      <div class="filter-group">
+        <label>Prix maximum (FCFA)</label>
+        <input type="number" id="prix-max" placeholder="Illimité" value="{{ prix_max or '' }}">
+      </div>
+      <button onclick="applyPrix()" class="btn-post" style="width:100%;justify-content:center;margin-top:4px">Appliquer les prix</button>
+
+      {% if pub_sidebar %}
+      <div style="margin-top:20px;text-align:center">
+        <div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Publicité</div>
+        <a href="/pub/clic/{{ pub_sidebar.id }}" target="_blank" rel="noopener">
+          <img src="/static/uploads/{{ pub_sidebar.image_url }}" alt="{{ pub_sidebar.annonceur }}"
+               style="width:140px;height:130px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+        </a>
+      </div>
+      {% endif %}
+    </aside>
+
+    <!-- RESULTS -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div class="results-count">
+          <strong>{{ total }}</strong> résultat{{ 's' if total > 1 else '' }}
+          {% if q %} pour « <strong>{{ q }}</strong> »{% endif %}
+          {% if ville_nom %} à <strong>{{ ville_nom }}</strong>{% endif %}
+          {% if categorie_nom %} · <strong>{{ categorie_nom }}</strong>{% endif %}
+        </div>
+        {% if current_vendeur %}
+        <a href="/alertes/depuis-recherche?{{ request.query_string.decode() }}"
+           style="font-size:12px;font-weight:600;color:var(--primary);border:1px solid var(--primary);padding:5px 12px;border-radius:20px;white-space:nowrap">
+          🔔 Créer une alerte
+        </a>
+        {% endif %}
+        <select onchange="applyFilter('tri', this.value)" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:13px;outline:none">
+          <option value="recent" {% if tri == 'recent' %}selected{% endif %}>Plus récentes</option>
+          <option value="prix-asc" {% if tri == 'prix-asc' %}selected{% endif %}>Prix croissant</option>
+          <option value="prix-desc" {% if tri == 'prix-desc' %}selected{% endif %}>Prix décroissant</option>
+          <option value="vues" {% if tri == 'vues' %}selected{% endif %}>Plus vues</option>
+        </select>
+      </div>
+
+      {% if annonces %}
+        <div class="ads-grid-3">
+
+          <!-- 🟡 ANNONCE SPONSORISÉE — 1ère position -->
+          {% if pub_sponsorisee %}
+          <a href="/pub/clic/{{ pub_sponsorisee.id }}" target="_blank" rel="noopener"
+             class="ad-card" style="border:2px solid #f59e0b;position:relative">
+            <div class="ad-img" style="background:#fffbeb">
+              {% if pub_sponsorisee.image_url %}
+                <img src="/static/uploads/{{ pub_sponsorisee.image_url }}" alt="{{ pub_sponsorisee.annonceur }}"
+                     style="width:100%;height:100%;object-fit:cover">
+              {% else %}
+                <i class="ti ti-ad" style="font-size:36px;color:#f59e0b"></i>
+              {% endif %}
+              <span style="position:absolute;top:8px;left:8px;background:#f59e0b;color:#78350f;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:0.3px">
+                🟡 Sponsorisé
+              </span>
+            </div>
+            <div class="ad-body">
+              <div class="ad-title">{{ pub_sponsorisee.annonceur }}</div>
+              {% if pub_sponsorisee.titre %}
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;line-height:1.4">{{ pub_sponsorisee.titre[:80] }}</div>
+              {% endif %}
+              <div class="ad-meta">
+                <span style="color:#f59e0b;font-weight:600;font-size:11px">Annonce sponsorisée</span>
+              </div>
+            </div>
+          </a>
+          {% endif %}
+
+          {% for a in annonces %}
+            <a href="/annonce/{{ a.slug }}" class="ad-card">
+              <div class="ad-img">
+                {% if a.photo_url %}
+                  <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+                {% else %}
+                  <i class="ti ti-{{ a.cat_icon }}"></i>
+                {% endif %}
+                {% if a.boutique_plan in ['pro','premium'] %}
+                  <span class="ad-badge pro">Pro</span>
+                {% endif %}
+              </div>
+              <div class="ad-body">
+                <div class="ad-title">{{ a.titre }}</div>
+                {% if a.prix_type == 'negociable' or a.prix == 0 %}
+                  <div class="ad-price negociable">Prix à négocier</div>
+                {% elif a.prix_type == 'mois' %}
+                  <div class="ad-price">{{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA/mois</div>
+                {% else %}
+                  <div class="ad-price">{{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA</div>
+                {% endif %}
+                <div class="ad-meta">
+                  <span><i class="ti ti-map-pin"></i>{{ a.ville_nom }}</span>
+                  <span><i class="ti ti-eye"></i>{{ a.vues }}</span>
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+
+        {% if total > per_page %}
+          <div class="pagination">
+            {% for p in range(1, (total // per_page) + 2) %}
+              <a href="{{ url_for('recherche', q=q, ville=ville_slug, categorie=categorie_slug, page=p) }}"
+                 class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
+          <i class="ti ti-search-off" style="font-size:48px;color:var(--border);display:block;margin-bottom:12px"></i>
+          <div style="font-size:16px;font-weight:600;margin-bottom:6px">Aucune annonce trouvée</div>
+          <div style="font-size:13px">Essayez avec d'autres mots-clés ou supprimez les filtres</div>
+          <a href="/recherche" style="display:inline-block;margin-top:16px;color:var(--primary);font-size:13px;font-weight:600">Voir toutes les annonces →</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const quartiersData = [
+  {% for q in quartiers %}
+  {slug: "{{ q.slug }}", nom: "{{ q.nom }}", ville_id: {{ q.ville_id }}},
+  {% endfor %}
+];
+const villesData = [
+  {% for v in villes %}
+  {slug: "{{ v.slug }}", id: {{ v.id }}},
+  {% endfor %}
+];
+
+function applyVille(villeSlug) {
+  const url = new URL(window.location.href);
+  if (villeSlug) url.searchParams.set('ville', villeSlug);
+  else url.searchParams.delete('ville');
+  url.searchParams.delete('quartier');
+  url.searchParams.delete('page');
+  window.location.href = url.toString();
+}
+
+function applyFilter(key, value) {
+  const url = new URL(window.location.href);
+  if (value) url.searchParams.set(key, value);
+  else url.searchParams.delete(key);
+  url.searchParams.delete('page');
+  window.location.href = url.toString();
+}
+function applyPrix() {
+  const url = new URL(window.location.href);
+  const min = document.getElementById('prix-min').value;
+  const max = document.getElementById('prix-max').value;
+  if (min) url.searchParams.set('prix_min', min); else url.searchParams.delete('prix_min');
+  if (max) url.searchParams.set('prix_max', max); else url.searchParams.delete('prix_max');
+  url.searchParams.delete('page');
+  window.location.href = url.toString();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 40" width="180" height="40" role="img" aria-label="helloBiz — Le bazar du Congo">
+  <title>helloBiz</title>
+  <!-- "hello" en blanc -->
+  <text x="0" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="700" fill="#ffffff" letter-spacing="-0.8">hello</text>
+  <!-- "Biz" en turquoise -->
+  <text x="90" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="700" fill="#00b7aa" letter-spacing="-0.8">Biz</text>
+  <!-- Ligne signature cyan -->
+  <rect x="0" y="35" width="170" height="2" rx="1" fill="#00b7aa" opacity="0.4"/>
+</svg>

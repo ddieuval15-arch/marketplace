@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Créer mon compte vendeur · helloBiz{% endblock %}
+
+{% block content %}
+<div style="min-height:90vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;background:var(--bg);position:relative;overflow:hidden">
+
+  <!-- Halo décoratif -->
+  <div style="position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(0,183,170,.05) 0%,transparent 70%);pointer-events:none"></div>
+
+  <div style="width:100%;max-width:520px;position:relative">
+
+    <!-- Logo + titre -->
+    <div style="text-align:center;margin-bottom:32px">
+      <a href="/" style="display:inline-flex;align-items:baseline;font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:20px">
+        <span style="color:var(--text)">hello</span><span style="color:var(--primary)">Biz</span>
+      </a>
+      <div style="width:40px;height:2px;background:var(--primary);margin:0 auto 20px;border-radius:1px;opacity:.5"></div>
+      <h1 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px">Ouvrez votre boutique</h1>
+      <p style="font-size:13px;color:var(--text-muted)">Rejoignez des centaines de vendeurs à Brazzaville et Pointe-Noire</p>
+    </div>
+
+    <!-- Card formulaire -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/inscription">
+
+        <!-- Nom -->
+        <div style="margin-bottom:16px">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Nom complet *</label>
+          <input type="text" name="nom" required placeholder="Ex : Natacha Moukamba"
+            value="{{ form.nom or '' }}"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 16px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s"
+            onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(0,183,170,.12)'"
+            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+        </div>
+
+        <!-- Email -->
+        <div style="margin-bottom:16px">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Email *</label>
+          <input type="email" name="email" required placeholder="votre@email.com"
+            value="{{ form.email or '' }}"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 16px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s"
+            onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(0,183,170,.12)'"
+            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+        </div>
+
+        <!-- Téléphone -->
+        <div style="margin-bottom:16px">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Téléphone WhatsApp *</label>
+          <input type="tel" name="telephone" required placeholder="(+242) 06 XXX XX XX"
+            value="{{ form.telephone or '' }}"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 16px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s"
+            onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(0,183,170,.12)'"
+            onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+        </div>
+
+        <!-- Mots de passe -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Mot de passe *</label>
+            <div style="position:relative">
+              <input type="password" name="password" required placeholder="Min. 6 car." id="pwd"
+                style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 44px 13px 16px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s"
+                onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(0,183,170,.12)'"
+                onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+              <button type="button" onclick="togglePwd('pwd','eye-pwd')"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px">
+                <i class="ti ti-eye" id="eye-pwd"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Confirmer *</label>
+            <div style="position:relative">
+              <input type="password" name="password2" required placeholder="Répéter" id="pwd2"
+                style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 44px 13px 16px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s"
+                onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(0,183,170,.12)'"
+                onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+              <button type="button" onclick="togglePwd('pwd2','eye-pwd2')"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px">
+                <i class="ti ti-eye" id="eye-pwd2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PLANS -->
+        <div style="margin-bottom:24px">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">Choisir votre plan *</label>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px" id="plans-grid">
+            {% for plan in [
+              {'id':'starter','nom':'Starter','prix':'2 500','feature':'5 annonces · 3 photos'},
+              {'id':'pro','nom':'Pro','prix':'6 000','feature':'20 annonces · 8 photos','recommended':true},
+              {'id':'premium','nom':'Premium','prix':'12 000','feature':'Illimité · Badge vérifié'}
+            ] %}
+            <label for="plan-{{ plan.id }}"
+              style="display:block;cursor:pointer;border:2px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;transition:all .15s">
+              <input type="radio" name="plan" id="plan-{{ plan.id }}" value="{{ plan.id }}"
+                style="display:none" {% if plan.id == 'pro' %}checked{% endif %}>
+              <div style="font-weight:800;font-size:14px;margin-bottom:2px">{{ plan.nom }}</div>
+              <div style="font-size:12px;color:var(--primary);font-weight:700">{{ plan.prix }} FCFA/mois</div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:4px">{{ plan.feature }}</div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="font-size:15px;padding:14px;margin-top:8px">
+          Creer mon compte →
+        </button>
+      </form>
+
+      <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text-muted)">Deja un compte ?</span>
+        <a href="/connexion" style="font-size:13px;color:var(--primary);font-weight:600;margin-left:6px">Se connecter</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// Highlight plan selectionne
+document.querySelectorAll('[name="plan"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('[name="plan"]').forEach(r => {
+      r.closest('label').style.borderColor = r.checked ? 'var(--primary)' : 'var(--border)';
+    });
+  });
+  if (radio.checked) radio.closest('label').style.borderColor = 'var(--primary)';
+});
+</script>
+{% endblock %}

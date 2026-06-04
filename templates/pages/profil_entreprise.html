@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}Profil Entreprise · {{ boutique.nom }} · helloBiz{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:640px;padding-top:28px;padding-bottom:48px">
+
+  <a href="/dashboard" style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:16px">← Mon espace</a>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+    <h1 style="font-size:20px;font-weight:800">🏢 Espace Entreprise Pro</h1>
+    <span class="plan-badge {{ boutique.plan }}">{{ boutique.plan }}</span>
+  </div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">
+    Complétez votre profil entreprise pour apparaître dans l'annuaire B2B helloBiz et recevoir des demandes de devis.
+  </p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for cat, msg in messages %}
+      <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <form method="POST" action="/boutique/{{ boutique.slug }}/entreprise">
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+
+      <!-- Secteur -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Secteur d'activité</label>
+        <input type="text" name="secteur" maxlength="100"
+          value="{{ boutique.secteur or '' }}"
+          placeholder="Ex : Nettoyage professionnel, BTP, Restauration…"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+
+      <!-- RCCM -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Numéro RCCM</label>
+        <input type="text" name="rccm" maxlength="80"
+          value="{{ boutique.rccm or '' }}"
+          placeholder="Ex : RCCMCG/PNR/01-2021-A10-XXXXX"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Renseigner votre RCCM renforce votre crédibilité auprès des clients.</div>
+      </div>
+
+      <!-- Horaires interactifs -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;display:block;margin-bottom:10px">Horaires d'ouverture</label>
+        <input type="hidden" name="horaires" id="horaires-hidden" value="{{ boutique.horaires or '' }}">
+        <div id="horaires-builder" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+          {% set jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'] %}
+          {% for jour in jours %}
+          <div class="jour-row" data-jour="{{ jour }}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %};flex-wrap:wrap">
+            <div style="width:90px;font-size:13px;font-weight:600;flex-shrink:0">{{ jour }}</div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" class="jour-ouvert" onchange="updateHoraires()" style="cursor:pointer"> Ouvert
+            </label>
+            <div class="plages" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
+              <select class="heure-debut" onchange="updateHoraires()" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:white">
+                {% for h in ['6h','7h','7h30','8h','8h30','9h','9h30','10h','11h','12h'] %}
+                <option value="{{ h }}" {% if h == '8h' %}selected{% endif %}>{{ h }}</option>
+                {% endfor %}
+              </select>
+              <span style="font-size:12px;color:var(--text-muted)">→</span>
+              <select class="heure-fin" onchange="updateHoraires()" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:white">
+                {% for h in ['12h','13h','14h','15h','16h','17h','17h30','18h','18h30','19h','20h','21h','22h'] %}
+                <option value="{{ h }}" {% if h == '18h' %}selected{% endif %}>{{ h }}</option>
+                {% endfor %}
+              </select>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+                <input type="checkbox" class="pause-midi" onchange="togglePause(this)" style="cursor:pointer"> Pause midi
+              </label>
+              <span class="pause-detail" style="display:none;font-size:12px;color:var(--text-muted)">
+                (12h–14h)
+              </span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div id="horaires-preview" style="margin-top:10px;font-size:12px;color:var(--text-muted);background:var(--surface);padding:8px 12px;border-radius:var(--radius-sm);min-height:20px;white-space:pre-line"></div>
+      </div>
+
+      <!-- Site web -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Site web</label>
+        <input type="url" name="site_web" maxlength="200"
+          value="{{ boutique.site_web or '' }}"
+          placeholder="https://www.votreentreprise.cg"
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+
+      <!-- Réseaux sociaux -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+        <div>
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Page Facebook</label>
+          <input type="url" name="facebook" maxlength="200"
+            value="{{ boutique.facebook or '' }}"
+            placeholder="https://facebook.com/..."
+            style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Instagram</label>
+          <input type="url" name="instagram" maxlength="200"
+            value="{{ boutique.instagram or '' }}"
+            placeholder="https://instagram.com/..."
+            style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;box-sizing:border-box"
+            onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:800;justify-content:center">
+        Activer mon Espace Entreprise Pro →
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const existingHoraires = {{ (boutique.horaires or '')|tojson }};
+
+function updateHoraires() {
+  const rows = document.querySelectorAll('.jour-row');
+  let lines = [];
+  rows.forEach(row => {
+    const jour = row.dataset.jour;
+    const ouvert = row.querySelector('.jour-ouvert').checked;
+    if (!ouvert) return;
+    const debut = row.querySelector('.heure-debut').value;
+    const fin   = row.querySelector('.heure-fin').value;
+    const pause = row.querySelector('.pause-midi').checked;
+    let line = `${jour} : ${debut}–${fin}`;
+    if (pause) line += ` (pause 12h–14h)`;
+    lines.push(line);
+  });
+  const val = lines.join('\n');
+  document.getElementById('horaires-hidden').value = val;
+  document.getElementById('horaires-preview').textContent = val || 'Aucun jour sélectionné';
+}
+
+function togglePause(cb) {
+  const row = cb.closest('.jour-row');
+  row.querySelector('.pause-detail').style.display = cb.checked ? 'inline' : 'none';
+  updateHoraires();
+}
+
+document.querySelectorAll('.jour-ouvert').forEach(cb => {
+  cb.addEventListener('change', function() {
+    const plages = this.closest('.jour-row').querySelector('.plages');
+    plages.style.display = this.checked ? 'flex' : 'none';
+    updateHoraires();
+  });
+});
+
+// Pré-remplir depuis horaires existants
+if (existingHoraires) {
+  const rows = document.querySelectorAll('.jour-row');
+  existingHoraires.split('\n').forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    const jourNom = line.split(' :')[0].trim();
+    rows.forEach(row => {
+      if (row.dataset.jour === jourNom) {
+        row.querySelector('.jour-ouvert').checked = true;
+        row.querySelector('.plages').style.display = 'flex';
+        const match = line.match(/(\d+h\d*)[–-](\d+h\d*)/);
+        if (match) {
+          [...row.querySelector('.heure-debut').options].forEach(o => { if (o.value === match[1]) o.selected = true; });
+          [...row.querySelector('.heure-fin').options].forEach(o => { if (o.value === match[2]) o.selected = true; });
+        }
+        if (line.includes('pause')) {
+          row.querySelector('.pause-midi').checked = true;
+          row.querySelector('.pause-detail').style.display = 'inline';
+        }
+      }
+    });
+  });
+  updateHoraires();
+}
+</script>
+{% endblock %}

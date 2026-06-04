@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle publicité · Admin{% endblock %}
+
+{% block content %}
+<div style="max-width:560px;margin:40px auto;padding:0 16px">
+
+  <a href="/admin/publicites" style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:16px">← Retour aux publicités</a>
+  <h1 style="font-size:20px;font-weight:800;margin-bottom:24px">Nouvelle publicité</h1>
+
+  <form action="/admin/publicites/ajouter" method="POST" enctype="multipart/form-data"
+        style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)">
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Nom de l'annonceur *</label>
+      <input type="text" name="annonceur" placeholder="Ex : MTN Congo, Brasserie du Congo..." required
+             style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Titre / Slogan (optionnel)</label>
+      <input type="text" name="titre" placeholder="Ex : Découvrez nos offres..."
+             style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Emplacement publicitaire *</label>
+      <select name="emplacement" required
+              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box;background:white">
+        <option value="banniere_top">① Bannière Top — 680×90px — 25 000 FCFA/sem</option>
+        <option value="sidebar">② Rectangle Sidebar — 140×130px — 15 000 FCFA/sem</option>
+        <option value="mid_page">③ Bannière Mid-page — 680×60px — 10 000 FCFA/sem</option>
+        <option value="sponsorisee">④ Annonce Sponsorisée — Carte boostée — 8 000 FCFA/sem</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Lien de destination *</label>
+      <input type="url" name="lien" placeholder="https://www.exemple.com" required
+             style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Image de la bannière * <span style="font-weight:400;color:var(--text-muted)">(728×90px recommandé)</span></label>
+      <input type="file" name="image" accept="image/*" required
+             style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box;background:white">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div>
+        <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Date de début *</label>
+        <input type="date" name="date_debut" required
+               style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Date de fin *</label>
+        <input type="date" name="date_fin" required
+               style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box">
+      </div>
+    </div>
+
+    <div style="margin-bottom:24px">
+      <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Montant perçu (FCFA)</label>
+      <input type="number" name="montant" placeholder="0" min="0"
+             style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;box-sizing:border-box">
+    </div>
+
+    <button type="submit"
+            style="width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;cursor:pointer">
+      <i class="ti ti-ad"></i> Publier la publicité
+    </button>
+  </form>
+
+</div>
+{% endblock %}

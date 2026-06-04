@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Mes favoris · helloBiz{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:40px">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <h1 style="font-size:20px;font-weight:800;color:var(--text)">
+      ❤️ Mes favoris <span style="font-size:15px;color:var(--text-muted);font-weight:500">({{ annonces|length }})</span>
+    </h1>
+    <a href="/" style="font-size:13px;color:var(--primary);font-weight:600">← Retour aux annonces</a>
+  </div>
+
+  {% if annonces %}
+  <div class="ads-grid-3">
+    {% for a in annonces %}
+    <div class="ad-card">
+      <a href="/annonce/{{ a.slug }}" class="ad-card-img-link">
+        {% if a.photo_url %}
+        <img src="/static/uploads/{{ a.photo_url }}" alt="{{ a.titre }}" class="ad-card-img">
+        {% else %}
+        <div class="ad-card-img ad-no-photo">
+          <i class="ti ti-{{ a.cat_icon }}" style="font-size:36px;color:var(--border)"></i>
+        </div>
+        {% endif %}
+        {% if a.boutique_plan in ['pro','premium'] %}
+        <span class="badge-plan-overlay {{ a.boutique_plan }}">{{ a.boutique_plan|capitalize }}</span>
+        {% endif %}
+      </a>
+      <div class="ad-card-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <a href="/annonce/{{ a.slug }}" class="ad-title">{{ a.titre }}</a>
+          <form action="/favori/{{ a.id }}/toggle" method="POST" style="flex-shrink:0">
+            <input type="hidden" name="next" value="/mes-favoris">
+            <button type="submit" title="Retirer des favoris"
+              style="background:none;border:none;cursor:pointer;padding:4px;font-size:20px;color:#e53e3e">
+              ❤️
+            </button>
+          </form>
+        </div>
+        <div class="ad-price">
+          {% if a.prix_type == 'negociable' or a.prix == 0 %}
+            <span style="color:var(--text-muted);font-weight:500;font-size:14px">À négocier</span>
+          {% elif a.prix_type == 'mois' %}
+            {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA<span style="font-size:12px">/mois</span>
+          {% else %}
+            {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA
+          {% endif %}
+        </div>
+        <div class="ad-meta">
+          <span><i class="ti ti-map-pin"></i> {{ a.ville_nom }}</span>
+          <span><i class="ti ti-eye"></i> {{ a.vues }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;background:white;border:1px solid var(--border);border-radius:var(--radius)">
+    <div style="font-size:48px;margin-bottom:16px">🤍</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Aucun favori pour l'instant</div>
+    <div style="font-size:14px;color:var(--text-muted);margin-bottom:20px">
+      Cliquez sur le ❤️ d'une annonce pour la sauvegarder ici.
+    </div>
+    <a href="/" style="display:inline-block;padding:10px 24px;background:var(--primary);color:white;border-radius:var(--radius-sm);font-weight:700;text-decoration:none">
+      Parcourir les annonces
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
