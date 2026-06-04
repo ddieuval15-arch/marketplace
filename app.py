@@ -19,10 +19,11 @@ DB_PATH = os.environ.get('DB_PATH',
 
 PLAN_LIMITS  = {'starter': 5, 'pro': 20, 'premium': 9999, 'business': 9999}
 PLANS_TARIFS = {
-    'starter':  {'nom': 'Starter',  'prix': 2500,  'annonces': 5,    'photos': 3},
-    'pro':      {'nom': 'Pro',      'prix': 6000,  'annonces': 20,   'photos': 8},
-    'premium':  {'nom': 'Premium',  'prix': 12000, 'annonces': 9999, 'photos': 20},
-    'business': {'nom': 'Business', 'prix': 50000, 'annonces': 9999, 'photos': 30},
+    ''starter':  {'nom': 'Starter',  'prix': 2500,  'annonces': 5,    'photos': 3,  'videos': 0},
+    'pro':      {'nom': 'Pro',      'prix': 6000,  'annonces': 20,   'photos': 8,  'videos': 1},
+    'premium':  {'nom': 'Premium',  'prix': 12000, 'annonces': 9999, 'photos': 20, 'videos': 9999},
+    'business': {'nom': 'Business', 'prix': 50000, 'annonces': 9999, 'photos': 30, 'videos': 9999},
+    
 }
 BOOST_TARIF = 2000
 EMPLACEMENTS_PUB = {
