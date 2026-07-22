@@ -29,14 +29,14 @@ def _fail(step, r):
     r.raise_for_status()
 
 def get_file(path):
-    url = f"{API_BASE}/files/path{APP_ROOT}/{path}/"
+    url = f"{API_BASE}/files/path{APP_ROOT}/{path}"
     r = requests.get(url, headers=HEADERS, timeout=30)
     if not r.ok:
         _fail(f"GET {path}", r)
     return r.text
 
 def put_file(path, content):
-    url = f"{API_BASE}/files/path{APP_ROOT}/{path}/"
+    url = f"{API_BASE}/files/path{APP_ROOT}/{path}"
     r = requests.post(url, headers=HEADERS, files={"content": content.encode("utf-8")}, timeout=30)
     if not r.ok:
         _fail(f"PUT {path}", r)
