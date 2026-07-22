@@ -24,6 +24,20 @@ API_BASE = f"https://www.pythonanywhere.com/api/v0/user/{PA_USER}"
 HEADERS = {"Authorization": f"Token {PA_TOKEN}"}
 APP_ROOT = f"/home/{PA_USER}/hellobiz/marketplace"
 
+def _list_dir(path):
+    url = f"{API_BASE}/files/path{path}"
+    if not url.endswith("/"):
+        url += "/"
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=30)
+        print(f"::warning::[LISTING {path}] HTTP {r.status_code} -- {r.text[:800]}")
+    except Exception as e:
+        print(f"::warning::[LISTING {path}] exception: {e}")
+
+_list_dir(f"/home/{PA_USER}/")
+_list_dir(f"/home/{PA_USER}/hellobiz/")
+_list_dir(f"/home/{PA_USER}/hellobiz/marketplace/")
+
 def _fail(step, r):
     print(f"::error::[{step}] HTTP {r.status_code} -- {r.text[:500]}")
     r.raise_for_status()
