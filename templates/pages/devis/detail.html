@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.numero }} · helloBiz{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:48px;max-width:860px">
+
+  <!-- Breadcrumb -->
+  <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">
+    <a href="{{ url_for('devis_dashboard') }}">Devis &amp; Factures</a> › {{ doc.numero }}
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div style="padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:16px;
+                background:{% if cat=='error' %}#fef2f2{% else %}#f0fdf4{% endif %};
+                color:{% if cat=='error' %}#dc2626{% else %}#16a34a{% endif %};
+                border:1px solid {% if cat=='error' %}#fca5a5{% else %}#86efac{% endif %};font-size:13px">
+      {{ msg }}
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  {% set statut_colors = {
+    'brouillon':           '#9ca3af',
+    'envoye':              '#d97706',
+    'accepte':             '#16a34a',
+    'refuse':              '#dc2626',
+    'en_attente_reglement':'#7c3aed',
+    'regle':               '#2563eb',
+    'paye':                '#2563eb'
+  } %}
+  {% set statut_labels = {
+    'brouillon':           'Brouillon',
+    'envoye':              'Envoyé',
+    'accepte':             'Accepté',
+    'refuse':              'Refusé',
+    'en_attente_reglement':'En attente de règlement',
+    'regle':               'Réglé',
+    'paye':                'Payé'
+  } %}
+
+  <!-- Document prévisualisation -->
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px">
+
+    <!-- Header document style facture -->
+    <div style="background:#0A0A0A;padding:20px 28px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="display:flex;align-items:center;gap:14px">
+          {% if profil.logo_path %}
+          <img src="/static/uploads/{{ profil.logo_path }}" alt="Logo"
+               style="width:56px;height:56px;object-fit:contain;background:#fff;border-radius:8px;padding:4px">
+          {% else %}
+          <div style="width:56px;height:56px;background:#1f2937;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#00b7aa">
+            {{ boutique.nom[0].upper() }}
+          </div>
+          {% endif %}
+          <div>
+            <div style="color:#00b7aa;font-size:12px;font-weight:700;letter-spacing:.08em">
+              {{ profil.nom or boutique.nom }}
+            </div>
+            {% if profil.rccm %}
+            <div style="color:#9ca3af;font-size:11px;margin-top:2px">RCCM : {{ profil.rccm }}</div>
+            {% endif %}
+            {% if profil.adresse %}
+            <div style="color:#9ca3af;font-size:11px">{{ profil.adresse }}</div>
+            {% endif %}
+            {% if profil.telephone %}
+            <div style="color:#9ca3af;font-size:11px">{{ profil.telephone }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="color:#fff;font-size:22px;font-weight:900;letter-spacing:.03em">
+            {% if doc.type == 'facture' %}FACTURE{% else %}DEVIS{% endif %}
+          </div>
+          <div style="color:#6b7280;font-size:12px;margin-top:3px">{{ doc.numero }}</div>
+          <div style="color:#6b7280;font-size:12px">Émis le : {{ doc.date_emission or doc.date_creation }}</div>
+          {% if doc.date_validite %}
+          <div style="color:#6b7280;font-size:11px">Valable jusqu'au : {{ doc.date_validite }}</div>
+          {% endif %}
+          <div style="margin-top:8px">
+            <span style="font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;
+                         background:{{ statut_colors.get(doc.statut, '#9ca3af') }}33;
+                         color:{{ statut_colors.get(doc.statut, '#9ca3af') }}">
+              {{ statut_labels.get(doc.statut, doc.statut) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Corps -->
+    <div style="padding:24px 28px">
+
+      <!-- Émetteur / Client -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">Émetteur</div>
+          <div style="font-weight:700;font-size:14px">{{ profil.nom or boutique.nom }}</div>
+          {% if profil.adresse %}<div style="font-size:13px;color:var(--text-muted)">{{ profil.adresse }}</div>{% endif %}
+          {% if profil.telephone %}<div style="font-size:13px;color:var(--text-muted)">{{ profil.telephone }}</div>{% endif %}
+          {% if profil.email %}<div style="font-size:13px;color:var(--text-muted)">{{ profil.email }}</div>{% endif %}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">Client</div>
+          <div style="font-weight:700;font-size:14px">{{ doc.client_nom }}</div>
+          {% if doc.client_contact %}<div style="font-size:13px;color:var(--text-muted)">{{ doc.client_contact }}</div>{% endif %}
+          {% if doc.date_validite %}
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+            Valable jusqu'au {{ doc.date_validite }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Tableau des lignes -->
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px">
+        <thead>
+          <tr style="background:var(--surface)">
+            <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:12px;color:var(--text-muted)">Description</th>
+            <th style="padding:10px 12px;text-align:center;font-weight:700;font-size:12px;color:var(--text-muted)">Qté</th>
+            <th style="padding:10px 12px;text-align:right;font-weight:700;font-size:12px;color:var(--text-muted)">Prix unit.</th>
+            <th style="padding:10px 12px;text-align:right;font-weight:700;font-size:12px;color:var(--text-muted)">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in lignes %}
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:12px 12px">{{ l.description }}</td>
+            <td style="padding:12px 12px;text-align:center">
+              {{ l.quantite|int if l.quantite == l.quantite|int else l.quantite }}
+            </td>
+            <td style="padding:12px 12px;text-align:right">
+              {{ "{:,.0f}".format(l.prix_unitaire).replace(',', ' ') }} FCFA
+            </td>
+            <td style="padding:12px 12px;text-align:right;font-weight:700">
+              {{ "{:,.0f}".format(l.total).replace(',', ' ') }} FCFA
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Total -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+        <div style="min-width:280px">
+          {% set sous_total = doc.sous_total if doc.sous_total else doc.total %}
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted);padding:4px 0">
+            <span>Sous-total</span>
+            <span>{{ "{:,.0f}".format(sous_total).replace(',', ' ') }} FCFA</span>
+          </div>
+          {% if doc.remise_pct and doc.remise_pct > 0 %}
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#dc2626;padding:4px 0">
+            <span>Remise ({{ doc.remise_pct|int }}%)</span>
+            <span>- {{ "{:,.0f}".format(sous_total * doc.remise_pct / 100).replace(',', ' ') }} FCFA</span>
+          </div>
+          {% endif %}
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;
+                      padding:10px 0;border-top:2px solid var(--border);margin-top:4px">
+            <span>Total TTC</span>
+            <span style="color:var(--primary)">{{ "{:,.0f}".format(doc.total).replace(',', ' ') }} FCFA</span>
+          </div>
+          {% if doc.montant_lettres %}
+          <div style="font-size:11px;color:var(--text-muted);font-style:italic;margin-top:4px;text-align:right">
+            {{ doc.montant_lettres }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Conditions -->
+      {% if doc.conditions or profil.conditions %}
+      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;color:var(--text-muted);margin-bottom:16px">
+        {{ doc.conditions or profil.conditions }}
+      </div>
+      {% endif %}
+
+      <!-- Footer légal -->
+      {% if profil.rccm or profil.banque %}
+      <div style="border-top:1px solid var(--border);padding-top:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;color:var(--text-muted)">
+          {% if profil.nom %}<strong>{{ profil.nom }}</strong>{% endif %}
+          {% if profil.rccm %} — RCCM : {{ profil.rccm }}{% endif %}
+          {% if profil.adresse %}<br>{{ profil.adresse }}{% endif %}
+          {% if profil.banque %}<br>{{ profil.banque }}{% endif %}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);text-align:right">
+          Généré via <strong>helloBiz</strong>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Barre d'actions -->
+    <div style="padding:14px 20px;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:8px;flex-wrap:wrap">
+      <a href="{{ wa_link }}" target="_blank" class="btn btn-primary" style="gap:6px">
+        <i class="ti ti-brand-whatsapp"></i> Envoyer WhatsApp
+      </a>
+      <a href="{{ url_for('devis_pdf', devis_id=doc.id) }}" class="btn btn-secondary">
+        <i class="ti ti-download"></i> Télécharger PDF
+      </a>
+      {% if doc.type == 'devis' and doc.statut not in ('refuse',) %}
+      <form method="POST" action="{{ url_for('devis_convertir', devis_id=doc.id) }}" style="display:inline">
+        <button type="submit" class="btn btn-secondary"
+                onclick="return confirm('Créer une facture à partir de ce devis ?')">
+          <i class="ti ti-file-invoice"></i> → Facture
+        </button>
+      </form>
+      {% endif %}
+
+      <!-- Changer statut -->
+      <form method="POST" action="{{ url_for('devis_statut', devis_id=doc.id) }}" style="display:inline">
+        <select name="statut" onchange="this.form.submit()"
+                style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);cursor:pointer">
+          <option value="">— Statut —</option>
+          {% for val, label in [('brouillon','Brouillon'),('envoye','Envoyé'),('accepte','Accepté'),('en_attente_reglement','En attente de règlement'),('regle','Réglé'),('refuse','Refusé')] %}
+          <option value="{{ val }}" {% if doc.statut == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      <!-- Supprimer -->
+      <form method="POST" action="{{ url_for('devis_supprimer', devis_id=doc.id) }}" style="display:inline;margin-left:auto">
+        <button type="submit" class="btn btn-secondary"
+                style="color:#dc2626;border-color:#dc2626"
+                onclick="return confirm('Supprimer ce document définitivement ?')">
+          <i class="ti ti-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% if doc.notes %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;font-size:13px">
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">Notes internes</div>
+    <div style="color:var(--text-muted)">{{ doc.notes }}</div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

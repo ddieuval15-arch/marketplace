@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Mot de passe oublié · helloBiz{% endblock %}
+{% block content %}
+<div style="min-height:90vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;background:var(--bg)">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:32px">
+      <a href="/" style="display:inline-flex;align-items:baseline;gap:0;font-size:28px;font-weight:700;margin-bottom:20px">
+        <span style="color:var(--text)">hello</span><span style="color:var(--primary)">Biz</span>
+      </a>
+      <h1 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px">Mot de passe oublié</h1>
+      <p style="font-size:13px;color:var(--text-muted)">Entrez votre email pour recevoir un lien de réinitialisation</p>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="form-label">Adresse email</label>
+          <input type="email" name="email" required autofocus placeholder="votre@email.com" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="font-size:15px;padding:14px">
+          Envoyer le lien
+        </button>
+      </form>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <a href="/connexion" style="font-size:13px;color:var(--primary);font-weight:600">← Retour à la connexion</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

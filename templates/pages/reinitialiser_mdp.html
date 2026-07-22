@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Nouveau mot de passe · helloBiz{% endblock %}
+{% block content %}
+<div style="min-height:90vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;background:var(--bg)">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:32px">
+      <a href="/" style="display:inline-flex;align-items:baseline;gap:0;font-size:28px;font-weight:700;margin-bottom:20px">
+        <span style="color:var(--text)">hello</span><span style="color:var(--primary)">Biz</span>
+      </a>
+      <h1 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px">Nouveau mot de passe</h1>
+      <p style="font-size:13px;color:var(--text-muted)">Choisissez un nouveau mot de passe sécurisé</p>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label class="form-label">Nouveau mot de passe</label>
+          <div style="position:relative">
+            <input type="password" name="password" id="pwd1" required placeholder="Minimum 6 caractères" class="form-control" style="padding-right:44px">
+            <button type="button" onclick="togglePwd('pwd1','eye1')"
+              style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px">
+              <i class="ti ti-eye" id="eye1"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="form-label">Confirmer le mot de passe</label>
+          <input type="password" name="password2" required placeholder="Répétez le mot de passe" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="font-size:15px;padding:14px">
+          Enregistrer le nouveau mot de passe
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

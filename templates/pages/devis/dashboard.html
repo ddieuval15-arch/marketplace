@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Devis & Factures · helloBiz{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:48px">
+
+  <!-- En-tête -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:20px;font-weight:800;margin-bottom:4px">Devis &amp; Factures</h1>
+      <div style="font-size:13px;color:var(--text-muted)">{{ boutique.nom }}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="{{ url_for('devis_profil') }}" class="btn btn-secondary" style="font-size:13px">
+        <i class="ti ti-settings"></i> Profil entreprise
+      </a>
+      <a href="{{ url_for('devis_nouveau') }}" class="btn btn-primary" style="font-size:13px">
+        <i class="ti ti-plus"></i> Nouveau devis
+      </a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div style="padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:16px;
+                background:{% if cat=='error' %}#fef2f2{% else %}#f0fdf4{% endif %};
+                color:{% if cat=='error' %}#dc2626{% else %}#16a34a{% endif %};
+                border:1px solid {% if cat=='error' %}#fca5a5{% else %}#86efac{% endif %};font-size:13px">
+      {{ msg }}
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Devis envoyés</div>
+      <div style="font-size:24px;font-weight:800">{{ stats.total_devis }}</div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Acceptés</div>
+      <div style="font-size:24px;font-weight:800;color:#16a34a">{{ stats.acceptes }}</div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">En attente</div>
+      <div style="font-size:24px;font-weight:800;color:#d97706">{{ stats.en_attente }}</div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">CA généré (FCFA)</div>
+      <div style="font-size:24px;font-weight:800;color:#16a34a">
+        {{ "{:,.0f}".format(stats.ca_genere).replace(',', ' ') }}
+      </div>
+    </div>
+  </div>
+
+  {% if not profil.rccm %}
+  <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:13px;display:flex;align-items:center;gap:10px">
+    <i class="ti ti-alert-triangle" style="color:#d97706;font-size:18px;flex-shrink:0"></i>
+    <span>Votre <strong>profil entreprise</strong> est incomplet — RCCM, logo et coordonnées bancaires n'apparaîtront pas sur vos documents.
+    <a href="{{ url_for('devis_profil') }}" style="color:var(--primary);font-weight:600">Compléter maintenant →</a></span>
+  </div>
+  {% endif %}
+
+  <!-- Liste -->
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:14px;font-weight:700">Documents récents</span>
+    </div>
+
+    {% if not docs %}
+    <div style="padding:48px;text-align:center;color:var(--text-muted)">
+      <i class="ti ti-file-text" style="font-size:40px;display:block;margin-bottom:12px"></i>
+      <div style="font-size:14px;margin-bottom:16px">Aucun document pour l'instant</div>
+      <a href="{{ url_for('devis_nouveau') }}" class="btn btn-primary">
+        <i class="ti ti-plus"></i> Créer votre premier devis
+      </a>
+    </div>
+    {% else %}
+
+    {% set statut_colors = {
+      'brouillon': '#9ca3af',
+      'envoye':    '#d97706',
+      'accepte':   '#16a34a',
+      'refuse':    '#dc2626',
+      'paye':      '#2563eb'
+    } %}
+    {% set statut_labels = {
+      'brouillon': 'Brouillon',
+      'envoye':    'Envoyé',
+      'accepte':   'Accepté',
+      'refuse':    'Refusé',
+      'paye':      'Payé'
+    } %}
+
+    {% for doc in docs %}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:3px">
+          {{ doc.numero }} — {{ doc.client_nom }}
+        </div>
+        <div style="font-size:12px;color:var(--text-muted)">
+          {% if doc.type == 'facture' %}<span style="color:#2563eb;font-weight:600">FACTURE</span>{% else %}Devis{% endif %}
+          · {{ doc.date_creation }}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:14px">
+          {{ "{:,.0f}".format(doc.total).replace(',', ' ') }} FCFA
+        </span>
+        <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+                     background:{{ statut_colors.get(doc.statut, '#9ca3af') }}22;
+                     color:{{ statut_colors.get(doc.statut, '#9ca3af') }}">
+          {{ statut_labels.get(doc.statut, doc.statut) }}
+        </span>
+        <a href="{{ url_for('devis_detail', devis_id=doc.id) }}" class="btn btn-secondary" style="font-size:12px;padding:6px 10px">
+          <i class="ti ti-eye"></i>
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

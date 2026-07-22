@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Changer mon mot de passe · helloBiz{% endblock %}
+{% block content %}
+<div style="min-height:90vh;display:flex;align-items:center;justify-content:center;padding:40px 16px;background:var(--bg)">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:32px">
+      <a href="/" style="display:inline-flex;align-items:baseline;gap:0;font-size:28px;font-weight:700;margin-bottom:20px">
+        <span style="color:var(--text)">hello</span><span style="color:var(--primary)">Biz</span>
+      </a>
+      <h1 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px">Changer mon mot de passe</h1>
+      <p style="font-size:13px;color:var(--text-muted)">Modifiez votre mot de passe de connexion</p>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label class="form-label">Ancien mot de passe</label>
+          <input type="password" name="ancien_mdp" required placeholder="Votre mot de passe actuel" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nouveau mot de passe</label>
+          <input type="password" name="nouveau_mdp" required placeholder="Minimum 6 caractères" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="form-label">Confirmer le nouveau mot de passe</label>
+          <input type="password" name="confirmer_mdp" required placeholder="Répétez le nouveau mot de passe" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="font-size:15px;padding:14px">
+          Mettre à jour le mot de passe
+        </button>
+      </form>
+      <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <a href="/dashboard" style="font-size:13px;color:var(--primary);font-weight:600">← Retour au tableau de bord</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

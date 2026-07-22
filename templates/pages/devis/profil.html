@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Profil entreprise · Devis & Factures{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:48px;max-width:700px">
+
+  <div style="margin-bottom:20px">
+    <a href="{{ url_for('devis_dashboard') }}" style="font-size:13px;color:var(--text-muted)">
+      ← Retour aux devis
+    </a>
+  </div>
+
+  <h1 style="font-size:20px;font-weight:800;margin-bottom:6px">Profil entreprise</h1>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">
+    Ces informations s'affichent automatiquement sur tous vos devis et factures.
+    À remplir une seule fois.
+  </p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div style="padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:16px;
+                background:{% if cat=='error' %}#fef2f2{% else %}#f0fdf4{% endif %};
+                color:{% if cat=='error' %}#dc2626{% else %}#16a34a{% endif %};
+                border:1px solid {% if cat=='error' %}#fca5a5{% else %}#86efac{% endif %};font-size:13px">
+      {{ msg }}
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" action="{{ url_for('devis_profil') }}" enctype="multipart/form-data">
+
+    <!-- Logo -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">
+        Logo de l'entreprise
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div id="logo-preview-box" style="width:100px;height:100px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          {% if profil.logo_path %}
+          <img id="logo-preview-img" src="/static/uploads/{{ profil.logo_path }}"
+               alt="Logo actuel" style="width:100%;height:100%;object-fit:contain;padding:6px">
+          {% else %}
+          <i class="ti ti-photo" style="font-size:32px;color:var(--text-muted)"></i>
+          {% endif %}
+        </div>
+        <div>
+          <label for="logo-input" class="btn btn-secondary" style="cursor:pointer;margin-bottom:8px;display:inline-flex">
+            <i class="ti ti-upload"></i> Choisir un logo
+          </label>
+          <input type="file" name="logo" id="logo-input" accept="image/*"
+                 style="display:none" onchange="previewLogo(this)">
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.7">
+            PNG ou JPG, fond transparent recommandé<br>
+            Taille max : 2 Mo<br>
+            <span style="color:var(--primary)">S'affiche en haut à gauche du document</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Infos légales -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">
+        Informations légales
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Nom de l'entreprise</label>
+          <input type="text" name="nom" value="{{ profil.nom or boutique.nom }}"
+                 style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text)">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">RCCM</label>
+          <input type="text" name="rccm" value="{{ profil.rccm or '' }}" placeholder="Ex : RCCMCG/PNR/01-2021-..."
+                 style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text)">
+        </div>
+        <div style="grid-column:span 2">
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Adresse complète</label>
+          <input type="text" name="adresse" value="{{ profil.adresse or '' }}"
+                 placeholder="Ex : Ngoyo - Arrêt Orphélinat, Pointe-Noire, Congo"
+                 style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text)">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Téléphone / WhatsApp</label>
+          <input type="text" name="telephone" value="{{ profil.telephone or '' }}"
+                 style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text)">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Email</label>
+          <input type="email" name="email" value="{{ profil.email or '' }}"
+                 style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text)">
+        </div>
+        <div style="grid-column:span 2">
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">
+            Coordonnées bancaires
+            <span style="color:var(--primary)">(s'affichent en pied de page)</span>
+          </label>
+          <input type="text" name="banque" value="{{ profil.banque or '' }}"
+                 placeholder="Ex : BSCA BANK — 30020-88200-30585160000-19"
+                 style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text)">
+        </div>
+        <div style="grid-column:span 2">
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Conditions de paiement (par défaut)</label>
+          <textarea name="conditions" rows="2"
+                    style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);resize:vertical">{{ profil.conditions or 'Paiement par Mobile Money (MTN MoMo / Airtel Money) ou espèces.' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <a href="{{ url_for('devis_dashboard') }}" class="btn btn-secondary">Annuler</a>
+      <button type="submit" class="btn btn-primary" style="font-size:14px;padding:10px 24px">
+        <i class="ti ti-device-floppy"></i> Enregistrer le profil
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function previewLogo(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const box = document.getElementById('logo-preview-box');
+    box.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;padding:6px">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+</script>
+{% endblock %}

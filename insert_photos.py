@@ -1,5 +1,6 @@
 import sqlite3
 
+# Images Unsplash (URLs directes, gratuites)
 photos = {
     'toyota-hilux-2022': [
         'https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=800',

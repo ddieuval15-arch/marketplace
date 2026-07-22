@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Offres d'emploi à Pointe-Noire et Brazzaville · helloBiz Congo{% endblock %}
+{% block og_type %}website{% endblock %}
+{% block og_title %}Offres d'emploi au Congo · helloBiz{% endblock %}
+{% block og_desc %}Trouvez les dernières offres d'emploi à Pointe-Noire et Brazzaville. Recrutement, stages, recherche d'emploi — toutes les opportunités au Congo sur helloBiz.{% endblock %}
+
+{% block head %}
+<meta name="description" content="Offres d'emploi à Pointe-Noire et Brazzaville, Congo. Trouvez un travail ou recrutez gratuitement sur helloBiz Congo — la marketplace de l'emploi au Congo.">
+<meta name="keywords" content="offre emploi Pointe-Noire, recrutement Congo, travail Brazzaville, stage Congo, offre emploi Congo, helloBiz emploi">
+<link rel="canonical" href="https://hellobizcongo.com/emploi">
+{% endblock %}
+
+{% block content %}
+<!-- HERO SEO -->
+<div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:48px 16px 40px;text-align:center">
+  <div style="max-width:700px;margin:0 auto">
+    <div style="font-size:12px;font-weight:700;color:var(--primary);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">💼 Emploi au Congo</div>
+    <h1 style="font-size:clamp(24px,5vw,38px);font-weight:900;color:white;line-height:1.2;margin-bottom:16px">
+      Trouvez votre emploi à<br><span style="color:var(--primary)">Pointe-Noire & Brazzaville</span>
+    </h1>
+    <p style="font-size:15px;color:rgba(255,255,255,.7);margin-bottom:28px;max-width:500px;margin-left:auto;margin-right:auto">
+      {{ total }} offre{{ 's' if total != 1 }} disponible{{ 's' if total != 1 }} · Recrutement, stages, recherche d'emploi
+    </p>
+    <!-- Barre de recherche -->
+    <form action="/recherche" method="GET" style="display:flex;gap:8px;max-width:480px;margin:0 auto">
+      <input type="hidden" name="categorie" value="emploi">
+      <input type="text" name="q" placeholder="Poste, secteur, entreprise…"
+        style="flex:1;padding:13px 16px;border-radius:var(--radius-sm);border:none;font-size:14px;outline:none">
+      <button type="submit"
+        style="background:var(--primary);color:var(--dark);border:none;padding:13px 20px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;white-space:nowrap">
+        🔍 Chercher
+      </button>
+    </form>
+    <!-- CTA recruteur -->
+    <div style="margin-top:20px">
+      <a href="/deposer-annonce" style="font-size:13px;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2);padding:8px 18px;border-radius:99px;text-decoration:none">
+        📋 Vous recrutez ? Postez une offre gratuitement →
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="padding-top:32px;padding-bottom:48px">
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:24px;align-items:start">
+
+    <!-- LISTE OFFRES -->
+    <div>
+      {% if offres %}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;color:var(--text)">{{ total }} offre{{ 's' if total != 1 }} d'emploi</h2>
+        <a href="/recherche?categorie=emploi" style="font-size:13px;color:var(--primary);font-weight:600">Voir tout →</a>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        {% for a in offres %}
+        <a href="/annonce/{{ a.slug }}" style="text-decoration:none;display:block;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:box-shadow .2s"
+           onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='none'">
+          <div style="display:flex;align-items:flex-start;gap:14px">
+            <!-- Icône secteur -->
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(0,183,170,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">
+              {% if a.emploi_secteur and 'BTP' in a.emploi_secteur %}🏗️
+              {% elif a.emploi_secteur and 'Info' in a.emploi_secteur %}💻
+              {% elif a.emploi_secteur and 'Santé' in a.emploi_secteur %}🏥
+              {% elif a.emploi_secteur and 'Commerce' in a.emploi_secteur %}🛒
+              {% elif a.emploi_secteur and 'Transport' in a.emploi_secteur %}🚛
+              {% elif a.emploi_secteur and 'Hôtel' in a.emploi_secteur %}🏨
+              {% elif a.emploi_secteur and 'Compt' in a.emploi_secteur %}📊
+              {% else %}💼{% endif %}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+                {% if a.emploi_type == 'offre' %}
+                <span style="font-size:10px;font-weight:700;background:rgba(22,163,74,.12);color:#16a34a;padding:2px 8px;border-radius:99px">📋 RECRUTEMENT</span>
+                {% else %}
+                <span style="font-size:10px;font-weight:700;background:rgba(0,183,170,.12);color:var(--primary);padding:2px 8px;border-radius:99px">👤 CHERCHE EMPLOI</span>
+                {% endif %}
+                {% if a.badge_verifie %}<span style="font-size:10px;font-weight:700;background:rgba(245,158,11,.12);color:#d97706;padding:2px 8px;border-radius:99px">✓ Vérifié</span>{% endif %}
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.titre }}</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">
+                {% if a.boutique_nom %}<strong style="color:var(--text)">{{ a.boutique_nom }}</strong> · {% endif %}
+                <i class="ti ti-map-pin"></i> {{ a.ville_nom }}
+                {% if a.emploi_secteur %} · {{ a.emploi_secteur }}{% endif %}
+              </div>
+              {% if a.prix and a.prix > 0 %}
+              <div style="font-size:13px;font-weight:700;color:var(--primary)">
+                {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA / mois
+              </div>
+              {% elif a.emploi_salaire %}
+              <div style="font-size:13px;color:var(--text-muted)">{{ a.emploi_salaire }}</div>
+              {% endif %}
+            </div>
+            <div style="font-size:11px;color:var(--text-light);flex-shrink:0;text-align:right">
+              {{ a.created_at[:10] }}<br>
+              <span style="color:var(--text-muted)">{{ a.vues }} vues</span>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <!-- État vide — incitation à poster -->
+      <div style="text-align:center;padding:60px 20px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+        <div style="font-size:48px;margin-bottom:16px">💼</div>
+        <h2 style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Soyez le premier à publier une offre d'emploi</h2>
+        <p style="font-size:14px;color:var(--text-muted);max-width:400px;margin:0 auto 24px">
+          Des milliers de jeunes cherchent du travail à Pointe-Noire et Brazzaville. Publiez votre offre gratuitement et touchez-les directement.
+        </p>
+        <a href="/deposer-annonce" style="background:var(--primary);color:var(--dark);padding:13px 28px;border-radius:var(--radius-sm);font-weight:800;text-decoration:none;font-size:14px">
+          📋 Publier une offre gratuitement →
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- SIDEBAR -->
+    <div style="position:sticky;top:80px">
+
+      <!-- Secteurs -->
+      {% if secteurs %}
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">📂 Secteurs</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          {% for s in secteurs %}
+          <a href="/recherche?categorie=emploi&q={{ s.emploi_secteur | urlencode }}"
+             style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:var(--radius-sm);background:var(--surface);text-decoration:none;font-size:13px;color:var(--text)">
+            <span>{{ s.emploi_secteur }}</span>
+            <span style="font-size:11px;background:rgba(0,183,170,.12);color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:700">{{ s.nb }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- CTA recruteur -->
+      <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:var(--radius);padding:20px;color:white;text-align:center">
+        <div style="font-size:24px;margin-bottom:10px">🏢</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px">Vous recrutez ?</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:16px">Publiez votre offre et touchez des milliers de candidats à Pointe-Noire.</div>
+        <a href="/deposer-annonce" style="display:block;background:var(--primary);color:#0f172a;padding:10px;border-radius:var(--radius-sm);font-weight:800;text-decoration:none;font-size:13px">
+          Publier une offre →
+        </a>
+      </div>
+
+      <!-- Alerte emploi -->
+      <div style="margin-top:16px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center">
+        <div style="font-size:20px;margin-bottom:8px">🔔</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Alerte emploi</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Recevez les nouvelles offres par email dès leur publication.</div>
+        <a href="/recherche?categorie=emploi"
+           style="display:block;background:var(--bg-light);border:1px solid var(--border);color:var(--primary);padding:8px;border-radius:var(--radius-sm);font-weight:700;text-decoration:none;font-size:12px">
+          🔔 Créer une alerte →
+        </a>
+      </div>
+
+      <!-- SEO texte -->
+      <div style="margin-top:16px;padding:16px;background:var(--surface);border-radius:var(--radius-sm);font-size:12px;color:var(--text-muted);line-height:1.6">
+        <strong style="color:var(--text);display:block;margin-bottom:6px">Emploi au Congo sur helloBiz</strong>
+        Trouvez des offres d'emploi à <strong>Pointe-Noire</strong>, <strong>Brazzaville</strong> et partout au Congo. 
+        BTP, commerce, informatique, santé, transport — tous les secteurs sont représentés.
+        Publiez votre CV ou votre offre de recrutement gratuitement.
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
