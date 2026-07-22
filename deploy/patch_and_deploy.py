@@ -44,6 +44,7 @@ def _list_dir(path):
 
 _list_dir(f"/home/{PA_USER}/hellobiz/marketplace/")
 _list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/")
+_list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/pages/")
 
 def _fail(step, r):
     print(f"::error::[{step}] HTTP {r.status_code} -- {r.text[:500]}")
