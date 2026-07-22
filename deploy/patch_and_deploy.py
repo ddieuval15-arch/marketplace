@@ -45,6 +45,15 @@ def _list_dir(path):
 _list_dir(f"/home/{PA_USER}/hellobiz/marketplace/")
 _list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/")
 _list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/pages/")
+_list_dir(f"/home/{PA_USER}/")
+
+# Lire le WSGI pour savoir quel repertoire est reellement sert
+try:
+    wsgi_url = f"{API_BASE}/files/path/var/www/{PA_USER}_pythonanywhere_com_wsgi.py"
+    r = requests.get(wsgi_url, headers=HEADERS, timeout=30)
+    print(f"::warning::[WSGI] HTTP {r.status_code} -- {r.text[:1000]}")
+except Exception as e:
+    print(f"::warning::[WSGI] exception: {e}")
 
 def _fail(step, r):
     print(f"::error::[{step}] HTTP {r.status_code} -- {r.text[:500]}")
