@@ -25,18 +25,25 @@ HEADERS = {"Authorization": f"Token {PA_TOKEN}"}
 APP_ROOT = f"/home/{PA_USER}/hellobiz/marketplace"
 
 def _list_dir(path):
+    import json as _json
     url = f"{API_BASE}/files/path{path}"
     if not url.endswith("/"):
         url += "/"
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
-        print(f"::warning::[LISTING {path}] HTTP {r.status_code} -- {r.text[:800]}")
+        if r.ok:
+            try:
+                keys = sorted(_json.loads(r.text).keys())
+            except Exception:
+                keys = ["<parse error>"]
+            print(f"::warning::[LISTING {path}] HTTP {r.status_code} -- {len(keys)} entrees : {', '.join(keys)}")
+        else:
+            print(f"::warning::[LISTING {path}] HTTP {r.status_code} -- {r.text[:500]}")
     except Exception as e:
         print(f"::warning::[LISTING {path}] exception: {e}")
 
-_list_dir(f"/home/{PA_USER}/")
-_list_dir(f"/home/{PA_USER}/hellobiz/")
 _list_dir(f"/home/{PA_USER}/hellobiz/marketplace/")
+_list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/")
 
 def _fail(step, r):
     print(f"::error::[{step}] HTTP {r.status_code} -- {r.text[:500]}")
