@@ -51,7 +51,8 @@ _list_dir(f"/home/{PA_USER}/")
 try:
     wsgi_url = f"{API_BASE}/files/path/var/www/{PA_USER}_pythonanywhere_com_wsgi.py"
     r = requests.get(wsgi_url, headers=HEADERS, timeout=30)
-    print(f"::warning::[WSGI] HTTP {r.status_code} -- {r.text[:1000]}")
+    flat = r.text.replace(chr(10), " | ").replace(chr(13), "")
+    print(f"::warning::[WSGI] HTTP {r.status_code} -- {flat[:1500]}")
 except Exception as e:
     print(f"::warning::[WSGI] exception: {e}")
 
