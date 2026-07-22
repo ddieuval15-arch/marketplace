@@ -22,7 +22,7 @@ DOMAIN = os.environ.get("PA_DOMAIN", f"{PA_USER}.pythonanywhere.com")
 
 API_BASE = f"https://www.pythonanywhere.com/api/v0/user/{PA_USER}"
 HEADERS = {"Authorization": f"Token {PA_TOKEN}"}
-APP_ROOT = f"/home/{PA_USER}/hellobiz/marketplace"
+APP_ROOT = f"/home/{PA_USER}/hellobiz"
 
 def _list_dir(path):
     import json as _json
@@ -42,19 +42,8 @@ def _list_dir(path):
     except Exception as e:
         print(f"::warning::[LISTING {path}] exception: {e}")
 
-_list_dir(f"/home/{PA_USER}/hellobiz/marketplace/")
-_list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/")
-_list_dir(f"/home/{PA_USER}/hellobiz/marketplace/templates/pages/")
-_list_dir(f"/home/{PA_USER}/")
-
-# Lire le WSGI pour savoir quel repertoire est reellement sert
-try:
-    wsgi_url = f"{API_BASE}/files/path/var/www/{PA_USER}_pythonanywhere_com_wsgi.py"
-    r = requests.get(wsgi_url, headers=HEADERS, timeout=30)
-    flat = r.text.replace(chr(10), " | ").replace(chr(13), "")
-    print(f"::warning::[WSGI] HTTP {r.status_code} -- {flat[:1500]}")
-except Exception as e:
-    print(f"::warning::[WSGI] exception: {e}")
+_list_dir(f"/home/{PA_USER}/hellobiz/")
+_list_dir(f"/home/{PA_USER}/hellobiz/templates/")
 
 def _fail(step, r):
     print(f"::error::[{step}] HTTP {r.status_code} -- {r.text[:500]}")
