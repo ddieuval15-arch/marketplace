@@ -10,30 +10,43 @@ import os
 import sys
 import requests
 
+print(f'[INFO] PA_USER={os.environ.get("PA_USERNAME","donytchicaya")}')
 PA_USER = os.environ.get("PA_USERNAME", "donytchicaya")
-PA_TOKEN = os.environ["PA_API_TOKEN"]
+_pa_token_raw = os.environ.get("PA_API_TOKEN")
+if not _pa_token_raw:
+    print("::error::La variable d'environnement PA_API_TOKEN est vide ou absente. Verifiez que le secret 'PA_API_TOKEN' existe bien dans Settings > Secrets and variables > Actions du depot.")
+    sys.exit(1)
+PA_TOKEN = _pa_token_raw.strip()
+print(f"[INFO] Token recu, longueur={len(PA_TOKEN)} caracteres")
 DOMAIN = os.environ.get("PA_DOMAIN", f"{PA_USER}.pythonanywhere.com")
 
 API_BASE = f"https://www.pythonanywhere.com/api/v0/user/{PA_USER}"
 HEADERS = {"Authorization": f"Token {PA_TOKEN}"}
 APP_ROOT = f"/home/{PA_USER}/hellobiz/marketplace"
 
+def _fail(step, r):
+    print(f"::error::[{step}] HTTP {r.status_code} -- {r.text[:500]}")
+    r.raise_for_status()
+
 def get_file(path):
     url = f"{API_BASE}/files/path{APP_ROOT}/{path}/"
     r = requests.get(url, headers=HEADERS, timeout=30)
-    r.raise_for_status()
+    if not r.ok:
+        _fail(f"GET {path}", r)
     return r.text
 
 def put_file(path, content):
     url = f"{API_BASE}/files/path{APP_ROOT}/{path}/"
     r = requests.post(url, headers=HEADERS, files={"content": content.encode("utf-8")}, timeout=30)
-    r.raise_for_status()
+    if not r.ok:
+        _fail(f"PUT {path}", r)
 
 def reload_app():
     url = f"{API_BASE}/webapps/{DOMAIN}/reload/"
     r = requests.post(url, headers=HEADERS, timeout=60)
     print(f"[RELOAD] status={r.status_code}")
-    r.raise_for_status()
+    if not r.ok:
+        _fail("RELOAD", r)
 
 def apply_patch(content, old, new, label):
     if new in content:
