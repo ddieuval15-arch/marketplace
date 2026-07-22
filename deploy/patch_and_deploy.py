@@ -245,3 +245,5 @@ else:
 print("=== reload de l'application ===")
 reload_app()
 print("=== TERMINE ===")
+
+# trigger: relance apres ajout du secret PA_API_TOKEN
