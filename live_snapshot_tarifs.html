@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Tarifs & Plans · helloBiz{% endblock %}
+{% block content %}
+
+<div style="max-width:1100px;margin:0 auto;padding:48px 16px">
+
+  <!-- En-tête -->
+  <div style="text-align:center;margin-bottom:52px">
+    <div style="display:inline-block;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px">Nos offres</div>
+    <h1 style="font-size:36px;font-weight:900;color:var(--text);margin-bottom:12px;line-height:1.15">Choisissez le plan qui correspond<br>à votre activité</h1>
+    <p style="font-size:16px;color:var(--text-muted);max-width:520px;margin:0 auto">Démarrez gratuitement, montez en puissance quand vous êtes prêt. Sans engagement, sans frais cachés.</p>
+  </div>
+
+  <!-- Bannière promo lancement -->
+  <div style="background:linear-gradient(135deg,#1a6b3c,#22a85a);border-radius:var(--radius);padding:18px 28px;margin-bottom:36px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;text-align:center">
+    <div style="font-size:22px">🎉</div>
+    <div>
+      <div style="font-size:15px;font-weight:800;color:white;margin-bottom:2px">Offre lancement — 50% de réduction pendant 6 mois</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.8)">Profitez-en maintenant · Les prix normaux s’appliquent à partir du 7ᵉ mois</div>
+    </div>
+  </div>
+
+  <!-- Grille des plans -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:48px">
+
+    <!-- GRATUIT -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px 22px;display:flex;flex-direction:column">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Gratuit</div>
+      <div style="font-size:32px;font-weight:900;color:var(--text);margin-bottom:4px">0 <span style="font-size:14px;font-weight:600;color:var(--text-muted)">FCFA/mois</span></div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Pour commencer sans risque</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 3 annonces actives</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 2 photos par annonce</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> Boutique en ligne</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de vidéo</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas d'avis clients</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de badge Vérifié</div>
+      </div>
+      {% if current_vendeur %}
+        {% if current_vendeur.plan == 'gratuit' %}
+        <div style="text-align:center;padding:10px;background:var(--bg-light);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--text-muted)">Plan actuel</div>
+        {% else %}
+        <div style="text-align:center;padding:10px;font-size:13px;color:var(--text-muted)">—</div>
+        {% endif %}
+      {% else %}
+      <a href="/inscription" style="display:block;text-align:center;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--text);text-decoration:none">Commencer gratuitement</a>
+      {% endif %}
+    </div>
+
+    <!-- STARTER -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px 22px;display:flex;flex-direction:column">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Starter</div>
+      <div style="font-size:32px;font-weight:900;color:var(--text);margin-bottom:2px">1 250 <span style="font-size:14px;font-weight:600;color:var(--text-muted)">FCFA/mois</span></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><span style="text-decoration:line-through">2 500 FCFA</span> a partir du 7e mois</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Pour les vendeurs actifs</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 5 annonces actives</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 3 photos par annonce</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> Boutique en ligne</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de vidéo</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas d'avis clients</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de badge Vérifié</div>
+      </div>
+      {% if current_vendeur %}
+        {% if current_vendeur.plan == 'starter' %}
+        <div style="text-align:center;padding:10px;background:var(--bg-light);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--text-muted)">Plan actuel</div>
+        {% elif current_vendeur.plan in ['gratuit'] %}
+        <a href="/paiement/upgrade/starter" style="display:block;text-align:center;padding:10px;background:var(--primary);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:white;text-decoration:none">Passer en Starter</a>
+        {% endif %}
+      {% else %}
+      <a href="/inscription" style="display:block;text-align:center;padding:10px;background:var(--primary);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:white;text-decoration:none">Commencer</a>
+      {% endif %}
+    </div>
+
+    <!-- PRO -->
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px 22px;display:flex;flex-direction:column">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Pro</div>
+      <div style="font-size:32px;font-weight:900;color:var(--text);margin-bottom:2px">3 000 <span style="font-size:14px;font-weight:600;color:var(--text-muted)">FCFA/mois</span></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><span style="text-decoration:line-through">6 000 FCFA</span> a partir du 7e mois</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Pour développer votre activité</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 20 annonces actives</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 8 photos par annonce</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 1 vidéo par annonce</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> Avis clients activés</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de priorité d'affichage</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de badge Vérifié</div>
+      </div>
+      {% if current_vendeur %}
+        {% if current_vendeur.plan == 'pro' %}
+        <div style="text-align:center;padding:10px;background:var(--bg-light);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--text-muted)">Plan actuel</div>
+        {% elif current_vendeur.plan in ['gratuit','starter'] %}
+        <a href="/paiement/upgrade/pro" style="display:block;text-align:center;padding:10px;background:var(--primary);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:white;text-decoration:none">Passer en Pro</a>
+        {% endif %}
+      {% else %}
+      <a href="/inscription" style="display:block;text-align:center;padding:10px;background:var(--primary);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:white;text-decoration:none">Commencer</a>
+      {% endif %}
+    </div>
+
+    <!-- PREMIUM -->
+    <div style="background:var(--card-bg);border:2px solid var(--primary);border-radius:var(--radius);padding:28px 22px;display:flex;flex-direction:column;position:relative">
+      <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--primary);color:white;font-size:11px;font-weight:700;padding:4px 14px;border-radius:999px;white-space:nowrap">⭐ Le plus populaire</div>
+      <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Premium</div>
+      <div style="font-size:32px;font-weight:900;color:var(--text);margin-bottom:2px">6 000 <span style="font-size:14px;font-weight:600;color:var(--text-muted)">FCFA/mois</span></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><span style="text-decoration:line-through">12 000 FCFA</span> a partir du 7e mois</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">Pour être visible en premier</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> Annonces illimitées</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> 20 photos par annonce</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> Vidéos illimitées</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><i class="ti ti-check" style="color:var(--primary)"></i> Avis clients activés</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600"><i class="ti ti-rocket" style="color:var(--primary)"></i> Priorité d'affichage</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600"><i class="ti ti-tag" style="color:var(--primary)"></i> Accès "Bon Plan"</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted)"><i class="ti ti-x" style="color:#d1d5db"></i> Pas de badge Vérifié</div>
+      </div>
+      {% if current_vendeur %}
+        {% if current_vendeur.plan == 'premium' %}
+        <div style="text-align:center;padding:10px;background:var(--primary-light);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--primary)">Plan actuel ✓</div>
+        {% elif current_vendeur.plan in ['gratuit','starter','pro'] %}
+        <a href="/paiement/upgrade/premium" style="display:block;text-align:center;padding:10px;background:var(--primary);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:white;text-decoration:none">Passer en Premium</a>
+        {% endif %}
+      {% else %}
+      <a href="/inscription" style="display:block;text-align:center;padding:10px;background:var(--primary);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:white;text-decoration:none">Commencer</a>
+      {% endif %}
+    </div>
+
+    <!-- BUSINESS -->
+    <div style="background:#0a0a0a;border:1px solid #333;border-radius:var(--radius);padding:28px 22px;display:flex;flex-direction:column">
+      <div style="font-size:12px;font-weight:700;color:#F5C518;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Business</div>
+      <div style="font-size:32px;font-weight:900;color:white;margin-bottom:2px">25 000 <span style="font-size:14px;font-weight:600;color:#aaa">FCFA/mois</span></div>
+      <div style="font-size:12px;color:#aaa;margin-bottom:8px"><span style="text-decoration:line-through">50 000 FCFA</span> a partir du 7e mois</div>
+      <div style="font-size:13px;color:#aaa;margin-bottom:24px">Pour les entreprises établies</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:white"><i class="ti ti-check" style="color:#F5C518"></i> Annonces illimitées</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:white"><i class="ti ti-check" style="color:#F5C518"></i> 30 photos par annonce</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:white"><i class="ti ti-check" style="color:#F5C518"></i> Vidéos illimitées</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:white"><i class="ti ti-check" style="color:#F5C518"></i> Priorité d'affichage</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:white"><i class="ti ti-check" style="color:#F5C518"></i> Accès "Bon Plan"</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:white"><i class="ti ti-check" style="color:#F5C518"></i> Profil Entreprise officiel</div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#F5C518"><i class="ti ti-shield-check" style="color:#F5C518"></i> Badge ✅ Vérifié helloBiz</div>
+      </div>
+      {% if current_vendeur %}
+        {% if current_vendeur.plan == 'business' %}
+        <div style="text-align:center;padding:10px;background:#1a1a1a;border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:#F5C518">Plan actuel ✓</div>
+        {% else %}
+        <a href="/paiement/upgrade/business" style="display:block;text-align:center;padding:10px;background:#F5C518;border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:#0a0a0a;text-decoration:none">Passer en Business</a>
+        {% endif %}
+      {% else %}
+      <a href="/inscription" style="display:block;text-align:center;padding:10px;background:#F5C518;border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:#0a0a0a;text-decoration:none">Commencer</a>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Tableau comparatif -->
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:48px">
+    <div style="padding:24px 28px;border-bottom:1px solid var(--border)">
+      <h2 style="font-size:18px;font-weight:800;color:var(--text);margin:0">Comparaison détaillée</h2>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg-light)">
+            <th style="text-align:left;padding:12px 20px;font-weight:700;color:var(--text-muted);width:30%">Fonctionnalité</th>
+            <th style="text-align:center;padding:12px 12px;font-weight:700;color:var(--text-muted)">Gratuit</th>
+            <th style="text-align:center;padding:12px 12px;font-weight:700;color:var(--text-muted)">Starter</th>
+            <th style="text-align:center;padding:12px 12px;font-weight:700;color:var(--text-muted)">Pro</th>
+            <th style="text-align:center;padding:12px 12px;font-weight:700;color:var(--primary)">Premium</th>
+            <th style="text-align:center;padding:12px 12px;font-weight:700;color:#F5C518;background:#0a0a0a">Business</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set rows = [
+            ('Annonces actives', '3', '5', '20', 'Illimitées', 'Illimitées'),
+            ('Photos par annonce', '2', '3', '8', '20', '30'),
+            ('Vidéos par annonce', '—', '—', '1', 'Illimitées', 'Illimitées'),
+            ('Avis clients', '—', '—', '✓', '✓', '✓'),
+            ('Priorité d\'affichage', '—', '—', '—', '✓', '✓'),
+            ('Accès Bon Plan', '—', '—', '—', '✓', '✓'),
+            ('Profil Entreprise', '—', '—', '—', '—', '✓'),
+            ('Badge Vérifié helloBiz', '—', '—', '—', '—', '✅'),
+          ] %}
+          {% for label, g, s, p, pr, b in rows %}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:12px 20px;font-weight:600;color:var(--text)">{{ label }}</td>
+            <td style="text-align:center;padding:12px;color:var(--text-muted)">{{ g }}</td>
+            <td style="text-align:center;padding:12px;color:var(--text-muted)">{{ s }}</td>
+            <td style="text-align:center;padding:12px;color:var(--text-muted)">{{ p }}</td>
+            <td style="text-align:center;padding:12px;color:var(--primary);font-weight:{% if pr == '✓' or pr == 'Illimitées' %}700{% else %}400{% endif %}">{{ pr }}</td>
+            <td style="text-align:center;padding:12px;color:#F5C518;font-weight:{% if b != '—' %}700{% else %}400{% endif %};background:#0a0a0a">{{ b }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div style="max-width:680px;margin:0 auto">
+    <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:28px;text-align:center">Questions fréquentes</h2>
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">Puis-je changer de plan à tout moment ?</div>
+        <div style="font-size:13px;color:var(--text-muted)">Oui. Vous pouvez monter de plan quand vous le souhaitez depuis votre tableau de bord. Le changement est effectif immédiatement après confirmation du paiement.</div>
+      </div>
+
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">Comment fonctionne le badge Vérifié ?</div>
+        <div style="font-size:13px;color:var(--text-muted)">Le badge ✅ Vérifié helloBiz est exclusif au plan Business. Il atteste que votre entreprise a été vérifiée et vous donne plus de crédibilité auprès des acheteurs. Il est visible sur votre boutique et dans les résultats de recherche.</div>
+      </div>
+
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">Qu'est-ce que la priorité d'affichage ?</div>
+        <div style="font-size:13px;color:var(--text-muted)">Les boutiques et annonces Premium et Business apparaissent en tête des résultats de recherche et de la page d'accueil, avant les plans inférieurs.</div>
+      </div>
+
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">Comment payer ?</div>
+        <div style="font-size:13px;color:var(--text-muted)">Nous acceptons MTN Mobile Money et Airtel Money. Le paiement est sécurisé et la confirmation est immédiate.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CTA bas de page -->
+  <div style="text-align:center;margin-top:52px;padding:40px;background:var(--primary-light);border-radius:var(--radius)">
+    <h3 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px">Vous avez une question sur nos offres ?</h3>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px">Notre équipe vous répond rapidement sur WhatsApp.</p>
+    <a href="https://wa.me/242040612350" target="_blank"
+       style="display:inline-block;padding:12px 28px;background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:14px;font-weight:700;text-decoration:none">
+      💬 Nous contacter sur WhatsApp
+    </a>
+  </div>
+
+</div>
+
+{% endblock %}

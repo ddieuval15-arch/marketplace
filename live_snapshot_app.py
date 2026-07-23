@@ -146,8 +146,12 @@ def calcul_badges_confiance(boutique, avis_list):
     b = boutique
     try:
         if b['badge_verifie']:
-            badges.append({'id': 'verifie', 'label': 'Verifie helloBiz', 'icon': '✅',
-                            'couleur': '#16a34a', 'bg': '#f0fdf4'})
+            if b['plan'] == 'business':
+                badges.append({'id': 'verifie', 'label': 'Verifie Business', 'icon': '👑',
+                                'couleur': '#92400e', 'bg': '#fef9c3'})
+            else:
+                badges.append({'id': 'verifie', 'label': 'Verifie helloBiz', 'icon': '✅',
+                                'couleur': '#16a34a', 'bg': '#f0fdf4'})
     except Exception:
         pass
     try:
@@ -188,7 +192,7 @@ PLANS_TARIFS = {
     'starter':  {'nom': 'Starter',  'prix': 2500,  'annonces': 5,    'photos': 3,  'videos': 0},
     'pro':      {'nom': 'Pro',      'prix': 6000,  'annonces': 20,   'photos': 8,  'videos': 1},
     'premium':  {'nom': 'Premium',  'prix': 12000, 'annonces': 9999, 'photos': 20, 'videos': 9999},
-    'business': {'nom': 'Business', 'prix': 50000, 'annonces': 9999, 'photos': 30, 'videos': 9999},
+    'business': {'nom': 'Business', 'prix': 25000, 'annonces': 9999, 'photos': 30, 'videos': 9999},
 }
 BOOST_TARIF = 2000
 EMPLACEMENTS_PUB = {

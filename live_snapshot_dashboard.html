@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Mon tableau de bord · helloBiz<div style="margin-top:16px;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:12px"><div><div style="font-weight:700;color:var(--text);margin-bottom:4px">Besoin d aide ?</div><div style="font-size:13px;color:var(--text-muted)">Notre equipe repond rapidement sur WhatsApp.</div></div><a href="/support" style="background:var(--primary);color:white;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none">Contacter le support</a></div>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--bg);min-height:80vh;padding:0 0 40px">
+
+  <!-- TOP BAR DASHBOARD -->
+  <div style="background:var(--dark);padding:16px 0;border-bottom:2px solid #1a1a1a">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:11px;color:#888;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px">Espace vendeur</div>
+        <div style="font-size:16px;font-weight:700;color:white">Bonjour, {{ vendeur.nom }} 👋</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a href="/deposer" class="btn-post"><i class="ti ti-plus"></i> Nouvelle annonce</a>
+        <a href="/boutique/{{ boutique.slug }}" style="display:flex;align-items:center;gap:6px;background:#1a1a1a;color:#ccc;border:1px solid #333;padding:8px 14px;border-radius:var(--radius-sm);font-size:13px">
+          <i class="ti ti-eye"></i> Ma vitrine
+        </a>
+        <a href="/boutique/{{ boutique.slug }}/affiche.pdf" style="display:flex;align-items:center;gap:6px;background:#1a1a1a;color:#00b7aa;border:1px solid #00b7aa;padding:8px 14px;border-radius:var(--radius-sm);font-size:13px;white-space:nowrap">
+          📄 Affiche PDF
+        </a>
+            <a href="/modifier-boutique" style="display:flex;align-items:center;gap:6px;background:#1a1a1a;color:#ccc;border:1px solid #333;padding:8px 14px;border-radius:var(--radius-sm);font-size:13px"><i class="ti ti-edit"></i> Modifier boutique</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="padding-top:24px">
+    {% if not boutique.actif %}
+    <div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-weight:700;color:#92400e;margin-bottom:4px">⏳ Boutique en attente d'activation</div>
+        <div style="font-size:13px;color:#a16207">Finalisez votre paiement Starter (2 500 FCFA) pour activer votre boutique et publier des annonces.</div>
+      </div>
+      <a href="/paiement/abonnement/starter"
+         style="padding:10px 20px;background:#f59e0b;color:white;border-radius:var(--radius-sm);font-size:13px;font-weight:700;white-space:nowrap">
+        💳 Payer maintenant
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px">
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ti-speakerphone" style="color:var(--primary);font-size:14px"></i>Annonces actives</div>
+        <div style="font-size:26px;font-weight:800;color:var(--text)">{{ stats.nb_actives }} <span style="font-size:14px;color:var(--text-muted);font-weight:400">/ {{ stats.limite }}</span></div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">{{ stats.restantes }} emplacement{{ 's' if stats.restantes > 1 }} disponible{{ 's' if stats.restantes > 1 }}</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ti-eye" style="color:var(--primary);font-size:14px"></i>Vues totales</div>
+        <div style="font-size:26px;font-weight:800;color:var(--text)">{{ stats.total_vues }}</div>
+        <div style="font-size:11px;color:var(--success);margin-top:4px">Ce mois</div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ti-building-store" style="color:var(--primary);font-size:14px"></i>Plan actuel</div>
+        <div style="font-size:20px;font-weight:800;color:var(--text)">{{ boutique.plan|capitalize }}</div>
+        {% if boutique.plan == 'gratuit' %}
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;margin-bottom:2px">Passer au plan :</div>
+            <a href="/paiement/upgrade/starter" style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px;display:block">↑ Starter — 1 250 FCFA</a>
+            <a href="/paiement/upgrade/pro" style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px;display:block">↑ Pro — 3 000 FCFA</a>
+            <a href="/paiement/upgrade/premium" style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px;display:block">↑ Premium — 6 000 FCFA</a>
+            <a href="/paiement/upgrade/business" style="font-size:11px;font-weight:700;margin-top:2px;display:block;color:#F5C518">↑ Business — 25 000 FCFA</a>
+        {% elif boutique.plan == 'starter' %}
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;margin-bottom:2px">Passer au plan :</div>
+            <a href="/paiement/upgrade/pro" style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px;display:block">↑ Pro — 3 000 FCFA</a>
+            <a href="/paiement/upgrade/premium" style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px;display:block">↑ Premium — 6 000 FCFA</a>
+            <a href="/paiement/upgrade/business" style="font-size:11px;font-weight:700;margin-top:2px;display:block;color:#F5C518">↑ Business — 25 000 FCFA</a>
+        {% elif boutique.plan == 'pro' %}
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;margin-bottom:2px">Passer au plan :</div>
+            <a href="/paiement/upgrade/premium" style="font-size:11px;color:var(--primary);font-weight:600;margin-top:2px;display:block">↑ Premium — 6 000 FCFA</a>
+            <a href="/paiement/upgrade/business" style="font-size:11px;font-weight:700;margin-top:2px;display:block;color:#F5C518">↑ Business — 25 000 FCFA</a>
+        {% elif boutique.plan == 'premium' %}
+            <a href="/paiement/upgrade/business" style="font-size:11px;font-weight:700;margin-top:4px;display:block;color:#F5C518">↑ Business — 25 000 FCFA</a>
+        {% else %}
+            <div style="font-size:11px;font-weight:700;margin-top:4px;color:#F5C518">★ Plan Business actif</div>
+        {% endif %}
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ti-shield-check" style="color:var(--primary);font-size:14px"></i>Statut</div>
+        <div style="font-size:16px;font-weight:700;color:{% if boutique.badge_verifie %}var(--success){% else %}var(--text-muted){% endif %}">
+          {% if boutique.badge_verifie %}✓ Vérifié{% else %}En attente{% endif %}
+        </div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">{{ boutique.ville_nom }}</div>
+            {% if boutique.verification_statut != "validee" %}
+            <a href="/demande-verification" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8">{% if boutique.verification_statut == "en_attente" %}Verification en cours{% elif boutique.verification_statut == "rejetee" %}Reessayer{% else %}Faire verifier ma boutique{% endif %}</a>
+            {% endif %}
+      </div>
+    </div>
+
+    <!-- BANNIERE PARRAINAGE -->
+    <div style="background:linear-gradient(135deg,#0c4a6e,#0369a1);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#7dd3fc;margin-bottom:2px">🎁 Parrainez un vendeur</div>
+        <div style="font-size:12px;color:#bae6fd">Invitez un ami a creer sa boutique — <strong style="color:#fff">{{ nb_filleuls }} filleul{{ 's' if nb_filleuls != 1 }}</strong> parrains.</div>
+                            {% if vendeur['is_ambassadeur'] %}
+                            <div style="font-size:12px;color:#bae6fd;margin-top:6px">Commission due ce mois : <strong style="color:#00C9A7">{{ commission_due }} FCFA</strong></div>
+                            {% elif remise_pct > 0 %}
+                            <div style="font-size:12px;color:#bae6fd;margin-top:6px">Remise fidelite : <strong style="color:#00C9A7">{{ remise_pct }}%</strong> sur votre prochain renouvellement</div>
+                            {% endif %}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <code id="plink" style="background:rgba(0,0,0,.35);color:#e0f2fe;padding:6px 12px;border-radius:var(--radius-sm);font-size:11px;font-family:monospace;word-break:break-all">{{ parrain_link }}</code>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('plink').innerText).then(()=>{this.textContent='✓ Copie!';setTimeout(()=>this.textContent='📋 Copier',2000)})"
+          style="padding:6px 14px;background:#0ea5e9;color:white;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+          📋 Copier
+        </button>
+      </div>
+    </div>
+
+    <!-- ESPACE ENTREPRISE PRO (Pro/Premium uniquement) -->
+    {% if boutique.plan in ('pro', 'premium') %}
+    <div style="background:{% if boutique.is_entreprise %}#e0f7f0{% else %}var(--primary-light){% endif %};border:1px solid {% if boutique.is_entreprise %}#0a5c3b{% else %}var(--primary){% endif %};border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:{% if boutique.is_entreprise %}#0a5c3b{% else %}var(--primary-dark){% endif %}">
+          🏢 Espace Entreprise Pro {% if boutique.is_entreprise %}<span style="font-size:11px;font-weight:600">· Actif</span>{% endif %}
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px">
+          {% if boutique.is_entreprise %}Votre entreprise est visible dans l'annuaire B2B helloBiz.
+          {% else %}Activez votre vitrine B2B : annuaire entreprises, horaires, RCCM, bouton devis.{% endif %}
+        </div>
+      </div>
+      <a href="/boutique/{{ boutique.slug }}/entreprise"
+         style="font-size:12px;font-weight:700;padding:8px 16px;border-radius:var(--radius-sm);background:{% if boutique.is_entreprise %}#0a5c3b{% else %}var(--primary){% endif %};color:white;white-space:nowrap;text-decoration:none">
+        {% if boutique.is_entreprise %}Modifier le profil{% else %}Activer maintenant{% endif %}
+      </a>
+    </div>
+    {% endif %}
+
+    
+    
+    <div style="background:#d4edda;border:1px solid #c3e6cb;border-radius:var(--radius);padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:16px">
+      <div style="font-size:32px">&#128242;</div>
+      <div>
+        <div style="font-size:11px;color:#155724;text-transform:uppercase;font-weight:600">Clics WhatsApp (7j)</div>
+        <div style="font-size:28px;font-weight:900;color:#155724">{{ clics_wa_7j }}</div>
+        <div style="font-size:12px;color:#155724">Total : {{ clics_wa_total }}</div>
+      </div>
+    </div>
+<!-- Score profil vendeur -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">&#128203; Profil vendeur</div>
+        <div style="font-size:22px;font-weight:900;color:{% if score_completude >= 80 %}var(--success){% elif score_completude >= 50 %}#f59e0b{% else %}#ef4444{% endif %}">{{ score_completude }}%</div>
+      </div>
+      <div style="background:#f1f5f9;border-radius:20px;height:10px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;border-radius:20px;width:{{ score_completude }}%;background:{% if score_completude >= 80 %}var(--success){% elif score_completude >= 50 %}#f59e0b{% else %}#ef4444{% endif %}"></div>
+      </div>
+      {% if champs_manquants %}<div style="font-size:12px;color:var(--text-muted)">A completer : {% for c in champs_manquants %}<span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 7px;font-size:11px;margin:2px;display:inline-block">{{ c }}</span>{% endfor %}</div>
+      {% else %}<div style="font-size:12px;color:var(--success);font-weight:600">&#10003; Profil complet</div>{% endif %}
+      <a href="/modifier-boutique" style="font-size:12px;color:var(--primary);font-weight:600;margin-top:8px;display:inline-block">Completer mon profil &#8594;</a>
+    </div>
+    <!-- Top annonces + tendance -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">&#128293; Top annonces</div>
+        <div style="font-size:13px;font-weight:700;color:{% if tendance_pct > 0 %}var(--success){% elif tendance_pct < 0 %}#ef4444{% else %}var(--text-muted){% endif %}">
+          {% if tendance_pct > 0 %}+{{ tendance_pct }}%{% elif tendance_pct < 0 %}{{ tendance_pct }}%{% else %}&#8212;{% endif %}
+          <span style="font-size:10px;font-weight:400;color:var(--text-muted)">vues total</span>
+        </div>
+      </div>
+      {% if top_annonces %}{% for a in top_annonces %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9">
+        <div><div style="font-size:13px;font-weight:600;color:var(--text)">{{ a.titre[:45] }}{% if a.titre|length > 45 %}...{% endif %}</div>
+          <div style="font-size:11px;color:var(--text-muted)">{% if a.prix_type == 'negociable' or a.prix == 0 %}A negocier{% else %}{{ a.prix|int }} FCFA{% endif %}</div></div>
+        <div style="text-align:right"><div style="font-size:18px;font-weight:800;color:var(--primary)">{{ a.vues }}</div><div style="font-size:10px;color:var(--text-muted)">vues</div></div>
+      </div>{% endfor %}
+      {% else %}<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Aucune annonce active — <a href="/deposer" style="color:var(--primary)">publier une annonce</a></div>{% endif %}
+    </div><!-- MES ANNONCES -->
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;color:var(--text)">Mes annonces</h2>
+        <a href="/deposer" class="btn-post" style="font-size:12px;padding:6px 12px"><i class="ti ti-plus"></i> Nouvelle</a>
+      </div>
+
+      {% if annonces %}
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border)">
+                <th style="text-align:left;padding:8px 10px;color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px">Annonce</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px">Prix</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px">Vues</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px">Statut</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--text-muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.4px">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in annonces %}
+                <tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:10px">
+                    <div style="font-weight:600;color:var(--text);margin-bottom:2px">{{ a.titre[:50] }}{% if a.titre|length > 50 %}…{% endif %}</div>
+                    <div style="font-size:11px;color:var(--text-muted)">{{ a.cat_nom }} · {{ a.ville_nom }}</div>
+                  </td>
+                  <td style="padding:10px;text-align:center;font-weight:600;color:var(--primary-dark)">
+                    {% if a.prix_type == 'negociable' or a.prix == 0 %}
+                      <span style="color:var(--text-muted);font-weight:400">À négocier</span>
+                    {% elif a.prix_type == 'mois' %}
+                      {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} /mois
+                    {% else %}
+                      {{ "{:,.0f}".format(a.prix).replace(',', ' ') }}
+                    {% endif %}
+                  </td>
+                  <td style="padding:10px;text-align:center;color:var(--text-muted)">{{ a.vues }}</td>
+                  <td style="padding:10px;text-align:center">
+                    <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+                      background:{% if a.statut == 'active' %}#e0f7f0{% elif a.statut == 'pause' %}#fef3c7{% else %}#fde8e8{% endif %};
+                      color:{% if a.statut == 'active' %}#0a5c3b{% elif a.statut == 'pause' %}#854d0e{% else %}#7b1c1c{% endif %}">
+                      {{ a.statut|capitalize }}
+                    </span>
+                  </td>
+                  <td style="padding:10px;text-align:center">
+                    <div style="display:flex;gap:6px;justify-content:center">
+                      <a href="/annonce/{{ a.slug }}" style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:11px;color:var(--text-muted);background:white;white-space:nowrap" title="Voir">
+                        <i class="ti ti-eye"></i> Voir
+                      </a>
+                      <a href="/modifier-annonce/{{ a.slug }}" style="padding:4px 10px;border:1px solid #93c5fd;border-radius:var(--radius-sm);font-size:11px;color:#1d4ed8;background:#eff6ff;white-space:nowrap" title="Modifier">
+                        <i class="ti ti-pencil"></i> Modifier
+                      </a>
+                      <form action="/renouveler-annonce/{{ a.slug }}" method="POST" style="display:inline">
+                        <button type="submit"
+                          style="padding:4px 10px;border:1px solid #6ee7b7;border-radius:var(--radius-sm);font-size:11px;color:#065f46;background:#ecfdf5;cursor:pointer;white-space:nowrap"
+                          title="Remettre en avant (1 fois / 24h)">
+                          🔄 Renouveler
+                        </button>
+                      </form>
+                      <a href="/paiement/boost/{{ a.id }}" style="padding:4px 10px;border:1px solid #fbbf24;border-radius:var(--radius-sm);font-size:11px;color:#92400e;background:#fef3c7;white-space:nowrap" title="Booster (2 000 FCFA)">
+                        <i class="ti ti-rocket"></i> Booster
+                      </a>
+                      <a href="/annonce/{{ a.slug }}/affiche.pdf" style="padding:4px 10px;border:1px solid #99f6e4;border-radius:var(--radius-sm);font-size:11px;color:#0d9488;background:#f0fdfa;white-space:nowrap" title="Affiche PDF">
+                        📄 Affiche
+                      </a>
+                      <a href="/supprimer-annonce/{{ a.slug }}" style="padding:4px 10px;border:1px solid #fca5a5;border-radius:var(--radius-sm);font-size:11px;color:#dc2626;background:#fef2f2;white-space:nowrap" title="Supprimer"
+                        onclick="return confirm('Supprimer cette annonce ?')">
+                        <i class="ti ti-trash"></i> Suppr.
+                      </a
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="text-align:center;padding:40px;color:var(--text-muted)">
+          <i class="ti ti-speakerphone" style="font-size:40px;color:var(--border);display:block;margin-bottom:10px"></i>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Aucune annonce pour l'instant</div>
+          <a href="/deposer" class="btn-post" style="display:inline-flex;margin-top:10px">
+            <i class="ti ti-plus"></i> Déposer ma première annonce
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+
+    <!-- POSITIONNEMENT ANNONCES -->
+    {% if positionnement %}
+    <div style="margin-top:16px;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;color:var(--text)">📊 Positionnement de vos annonces</h2>
+        <span style="font-size:11px;color:var(--text-muted)">Mis à jour en temps réel</span>
+      </div>
+      {% for p in positionnement %}
+      <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;{% if not loop.last %}margin-bottom:12px{% endif %}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700;color:var(--text);flex:1">{{ p.annonce.titre }}</div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:11px;color:var(--text-muted)">Position</div>
+            <div style="font-size:18px;font-weight:800;color:{% if p.rang <= 3 %}#16a34a{% elif p.rang <= 10 %}var(--primary){% else %}#f59e0b{% endif %}">
+              #{{ p.rang }}<span style="font-size:11px;font-weight:400;color:var(--text-muted)"> / {{ p.total_cat }}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
+            <span>Score de visibilité</span>
+            <span style="font-weight:700;color:var(--text)">{{ p.score }} / {{ p.score_max }} pts</span>
+          </div>
+          <div style="background:var(--bg-light);border-radius:99px;height:8px;overflow:hidden">
+            <div style="height:100%;width:{{ p.score_pct }}%;background:{% if p.score_pct >= 70 %}#16a34a{% elif p.score_pct >= 40 %}var(--primary){% else %}#f59e0b{% endif %};border-radius:99px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-light);margin-top:3px">
+            <span>Plan : +{{ 40 if boutique.plan in ['premium','business'] else 20 if boutique.plan=='pro' else 10 if boutique.plan=='starter' else 0 }} pts</span>
+            <span>Fraîcheur : +{{ 30 if p.days_old < 3 else 20 if p.days_old < 7 else 10 if p.days_old < 30 else 0 }} pts</span>
+            <span>Vues : +{{ 15 if p.annonce.vues > 100 else 10 if p.annonce.vues > 50 else 5 if p.annonce.vues > 10 else 0 }} pts</span>
+            <span>Badge : +{{ 10 if boutique.badge_verifie else 0 }} pts</span>
+          </div>
+        </div>
+        {% if p.conseils %}
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
+          {% for c in p.conseils %}
+          <div style="display:flex;align-items:flex-start;gap:7px;padding:7px 10px;border-radius:var(--radius-sm);background:{% if c.type == 'upgrade' %}rgba(245,197,24,.1){% elif c.type == 'renouveler' %}rgba(249,115,22,.1){% else %}rgba(0,183,170,.08){% endif %}">
+            <span style="font-size:13px;flex-shrink:0">{% if c.type == 'photo' %}📷{% elif c.type == 'titre' %}✏️{% elif c.type == 'renouveler' %}🔄{% else %}⚡{% endif %}</span>
+            <span style="font-size:11px;color:var(--text)">{{ c.text }}
+              {% if c.type == 'photo' %}<a href="/modifier-annonce/{{ p.annonce.slug }}" style="color:var(--primary);font-weight:600;margin-left:4px">Ajouter →</a>{% endif %}
+              {% if c.type == 'renouveler' %}<form action="/renouveler-annonce/{{ p.annonce.slug }}" method="POST" style="display:inline"><button type="submit" style="background:none;border:none;color:var(--primary);font-weight:600;cursor:pointer;font-size:11px;padding:0;margin-left:4px">Renouveler →</button></form>{% endif %}
+              {% if c.type == 'upgrade' %}<a href="/paiement/upgrade/pro" style="color:#a16207;font-weight:600;margin-left:4px">Passer en Pro →</a>{% endif %}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="font-size:11px;color:#16a34a;margin-top:6px">✅ Annonce bien optimisée</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- INFOS BOUTIQUE -->
+    <div style="margin-top:16px;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h2 style="font-size:16px;font-weight:700;color:var(--text)">Ma boutique</h2>
+        <div style="display:flex;gap:12px">
+          <a href="/stats" style="font-size:13px;color:var(--primary);font-weight:600">📊 Statistiques →</a>
+          <a href="/boutique/{{ boutique.slug }}" style="font-size:13px;color:var(--primary);font-weight:600">Voir la vitrine →</a>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:13px">
+        <div><div style="color:var(--text-muted);margin-bottom:3px">Nom</div><div style="font-weight:600">{{ boutique.nom }}</div></div>
+        <div><div style="color:var(--text-muted);margin-bottom:3px">Catégorie</div><div style="font-weight:600">{{ boutique.cat_nom }}</div></div>
+        <div><div style="color:var(--text-muted);margin-bottom:3px">Ville</div><div style="font-weight:600">{{ boutique.ville_nom }}</div></div>
+        <div><div style="color:var(--text-muted);margin-bottom:3px">Téléphone</div><div style="font-weight:600">{{ boutique.telephone }}</div></div>
+        <div><div style="color:var(--text-muted);margin-bottom:3px">WhatsApp</div><div style="font-weight:600">{{ boutique.whatsapp }}</div></div>
+        <div><div style="color:var(--text-muted);margin-bottom:3px">Plan</div><div><span class="badge-plan {{ boutique.plan }}">{{ boutique.plan|capitalize }}</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
