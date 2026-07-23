@@ -621,6 +621,35 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# templates/pages/admin.html -- fix lien notification boutiques en attente
+# ─────────────────────────────────────────────────────────────
+path = "templates/pages/admin.html"
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '''  {% if stats.boutiques_attente > 0 %}
+  <a href="#" onclick="showTab(\'boutiques\');return false;" style="display:flex;align-items:center;gap:8px;background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    \U0001F534 {{ stats.boutiques_attente }} boutique(s) en attente d\'activation
+  </a>
+  {% endif %}''',
+    '''  {% if stats.boutiques_attente > 0 %}
+  <a href="#" onclick="showTab(\'en-attente\');return false;" style="display:flex;align-items:center;gap:8px;background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    \U0001F534 {{ stats.boutiques_attente }} boutique(s) en attente d\'activation
+  </a>
+  {% endif %}''',
+    "corrige le lien de notification boutiques en attente pour pointer vers l\'onglet En attente (avec les boutons Approuver/Rejeter) au lieu de l\'onglet Boutiques (simple liste)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
