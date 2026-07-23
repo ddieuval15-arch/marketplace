@@ -555,6 +555,36 @@ c, ch = apply_patch(
 )
 changed = changed or ch
 
+c, ch = apply_patch(
+    c,
+    """    try:
+        if b['badge_verifie']:
+            badges.append({'id': 'verifie', 'label': 'Verifie helloBiz', 'icon': '\u2705',
+                            'couleur': '#16a34a', 'bg': '#f0fdf4'})
+    except Exception:
+        pass""",
+    """    try:
+        if b['badge_verifie']:
+            if b['plan'] == 'business':
+                badges.append({'id': 'verifie', 'label': 'Verifie Business', 'icon': '\U0001F451',
+                                'couleur': '#92400e', 'bg': '#fef9c3'})
+            else:
+                badges.append({'id': 'verifie', 'label': 'Verifie helloBiz', 'icon': '\u2705',
+                                'couleur': '#16a34a', 'bg': '#f0fdf4'})
+    except Exception:
+        pass""",
+    "badge Verifie en dore/couronne pour les boutiques plan Business, vert pour les autres",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "    'business': {'nom': 'Business', 'prix': 50000, 'annonces': 9999, 'photos': 30, 'videos': 9999},",
+    "    'business': {'nom': 'Business', 'prix': 25000, 'annonces': 9999, 'photos': 30, 'videos': 9999},",
+    "corrige le prix reellement facture du plan Business (25000 FCFA, prix promo actuel) au lieu de l'ancien 50000",
+)
+changed = changed or ch
+
 if changed:
     put_file(path, c)
     print("  -> fichier mis a jour sur le serveur")
@@ -712,12 +742,54 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# templates/pages/cgu.html -- corrige le prix affiche du plan Business
+# ─────────────────────────────────────────────────────────────
+path = "templates/pages/cgu.html"
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '<li><strong style="color:var(--text)">Business \u2014 50 000 FCFA/mois</strong>',
+    '<li><strong style="color:var(--text)">Business \u2014 25 000 FCFA/mois</strong>',
+    "corrige le prix Business affiche dans les CGU (25000 FCFA au lieu de 50000)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/dashboard.html -- corrige le prix affiche du lien upgrade Business
+# ─────────────────────────────────────────────────────────────
+path = "templates/pages/dashboard.html"
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "\u2b06 Passer en Business (50 000 FCFA) \u2192",
+    "\u2b06 Passer en Business (25 000 FCFA) \u2192",
+    "corrige le prix Business affiche sur le lien d'upgrade du dashboard vendeur (25000 FCFA au lieu de 50000)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
 # directement via git au lieu de les extraire via les annotations
 # (trop volumineux et coupees au premier retour a la ligne).
-for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html"), ("templates/pages/creer_boutique.html", "live_snapshot_creer_boutique.html"), ("templates/pages/deposer_annonce.html", "live_snapshot_deposer_annonce.html"), ("templates/pages/admin.html", "live_snapshot_admin.html")]:
+for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html"), ("templates/pages/creer_boutique.html", "live_snapshot_creer_boutique.html"), ("templates/pages/deposer_annonce.html", "live_snapshot_deposer_annonce.html"), ("templates/pages/admin.html", "live_snapshot_admin.html"), ("templates/pages/cgu.html", "live_snapshot_cgu.html"), ("templates/pages/dashboard.html", "live_snapshot_dashboard.html"), ("templates/pages/tarifs.html", "live_snapshot_tarifs.html")]:
     try:
         _live = get_file(_fname)
         with open(_out, "w", encoding="utf-8") as _f:
