@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}{{ boutique.nom }} · {{ boutique.cat_nom }} · helloBiz{% endblock %}
+{% block og_type %}business.business{% endblock %}
+{% block og_title %}{{ boutique.nom }} — {{ boutique.cat_nom }} · {{ boutique.ville_nom }}{% endblock %}
+{% block og_desc %}{{ boutique.description[:200] if boutique.description else boutique.nom }}{% endblock %}
+
+<link rel="canonical" href="{{ request.url }}">
+{% block description %}{{ boutique.description[:155] if boutique.description else "Boutique " + boutique.nom + " — " + boutique.cat_nom + " à " + boutique.ville_nom + " sur helloBiz Congo." }}{% endblock %}
+{% block og_image %}{% if boutique.logo %}{% if boutique.logo.startswith('http') %}{{ boutique.logo }}{% else %}{{ request.host_url }}{{ boutique.logo.lstrip('/') }}{% endif %}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:24px;padding-bottom:48px">
+
+  <!-- EN-TETE -->
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:24px">
+    <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+      <div class="boutique-logo" style="width:72px;height:72px;font-size:28px;flex-shrink:0">
+        {% if boutique.logo %}
+          <img src="/static/uploads/{{ boutique.logo }}" alt="{{ boutique.nom }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+        {% else %}{{ boutique.nom[0].upper() }}{% endif %}
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <h1 style="font-size:22px;font-weight:800">{{ boutique.nom }}</h1>
+          {% if boutique.badge_verifie %}<span style="color:var(--primary);font-size:14px">✓ Verifie</span>{% endif %}
+          <span class="plan-badge {{ boutique.plan }}">{{ boutique.plan }}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
+          {{ boutique.cat_nom }} · {{ boutique.ville_nom }}
+          {% if note_moy %} · ⭐ {{ note_moy }}/5 ({{ avis_list|length }} avis){% endif %}
+        </div>
+        {% if boutique.description %}
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6">{{ boutique.description }}</p>
+        {% endif %}
+        <div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap">
+          <div style="font-size:13px"><span style="font-weight:700;color:var(--primary)">{{ stats.nb_annonces }}</span> <span style="color:var(--text-muted)">annonces</span></div>
+          <div style="font-size:13px"><span style="font-weight:700;color:var(--primary)">{{ stats.total_vues }}</span> <span style="color:var(--text-muted)">vues totales</span></div>
+          {% if boutique.secteur %}<div style="font-size:12px;font-weight:600;color:var(--primary);background:var(--primary-light);padding:3px 10px;border-radius:20px">{{ boutique.secteur }}</div>{% endif %}
+        </div>
+        <!-- Infos entreprise -->
+        {% if boutique.is_entreprise %}
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+          {% if boutique.rccm %}<div style="font-size:11px;color:var(--text-muted)"><i class="ti ti-id-badge"></i> RCCM : {{ boutique.rccm }}</div>{% endif %}
+          {% if boutique.site_web %}<a href="{{ boutique.site_web }}" target="_blank" style="font-size:11px;color:var(--primary)"><i class="ti ti-world"></i> Site web</a>{% endif %}
+          {% if boutique.facebook %}<a href="{{ boutique.facebook }}" target="_blank" style="font-size:11px;color:#1877f2"><i class="ti ti-brand-facebook"></i> Facebook</a>{% endif %}
+          {% if boutique.instagram %}<a href="{{ boutique.instagram }}" target="_blank" style="font-size:11px;color:#e1306c"><i class="ti ti-brand-instagram"></i> Instagram</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;flex-shrink:0">
+        {% if boutique.is_entreprise and current_vendeur %}
+        <a href="/messages/contacter/{{ annonces[0].id if annonces else '#' }}"
+           class="btn btn-primary" style="justify-content:center;font-size:13px;padding:10px 16px;background:#0a5c3b;border-color:#0a5c3b">
+          <i class="ti ti-file-invoice"></i> Demander un devis
+        </a>
+        {% endif %}
+        {% if boutique.telephone %}
+        <a href="tel:{{ boutique.telephone }}" class="btn btn-primary" style="justify-content:center;font-size:13px;padding:10px 16px">
+          <i class="ti ti-phone"></i> {{ boutique.telephone }}
+        </a>
+        {% endif %}
+        {% if boutique.whatsapp %}
+        <a href="https://api.whatsapp.com/send?phone={{ boutique.whatsapp|phone_wa}}" class="wa-notif" data-vid="{{ boutique.vendeur_id }}" data-nom="{{ boutique.nom }}"
+           target="_self" class="btn btn-secondary" style="justify-content:center;font-size:13px;padding:10px 16px;border-color:#25d366;color:#25d366">
+          <i class="ti ti-brand-whatsapp"></i> WhatsApp
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- HORAIRES (entreprise) -->
+  {% if boutique.is_entreprise and boutique.horaires %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">
+    <i class="ti ti-clock" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Horaires d'ouverture</div>
+      <div style="font-size:13px;color:var(--text-muted);white-space:pre-line">{{ boutique.horaires }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ANNONCES -->
+  {% if annonces %}
+  <section class="section">
+    <h2 class="section-title" style="margin-bottom:16px">{{ stats.nb_annonces }} annonce{{ 's' if stats.nb_annonces > 1 else '' }}</h2>
+    <div class="ads-grid">
+      {% for a in annonces %}
+      <a href="/annonce/{{ a.slug }}" class="ad-card">
+        <div class="ad-img">
+          {% if a.photo_url %}
+          <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+          {% else %}
+          <img src="/static/images/categories/{{ a.cat_slug }}.jpg" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+          {% endif %}
+        </div>
+        <div class="ad-body">
+          <div class="ad-title">{{ a.titre }}</div>
+          <div class="ad-price">
+            {% if a.prix and a.prix > 0 %}{{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA{% else %}A negocier{% endif %}
+          </div>
+          <div class="ad-meta"><i class="ti ti-map-pin" style="font-size:11px"></i>{{ a.ville_nom }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% else %}
+  <div style="text-align:center;padding:48px 16px;color:var(--text-muted)">
+    <i class="ti ti-package" style="font-size:48px;display:block;margin-bottom:12px;opacity:.3"></i>
+    <p>Cette boutique n'a pas encore d'annonces actives.</p>
+  </div>
+  {% endif %}
+
+  <!-- AVIS -->
+  <section class="section">
+    <h2 class="section-title" style="margin-bottom:16px">
+      Avis clients
+      {% if avis_list %}<span style="font-size:13px;font-weight:400;color:var(--text-muted)"> — {{ avis_list|length }} avis · ⭐ {{ note_moy }}/5</span>{% endif %}
+    </h2>
+
+    {% if avis_list %}
+    <div style="display:grid;gap:12px;margin-bottom:24px">
+      {% for av in avis_list %}
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:var(--dark);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            {{ av.auteur_nom[0].upper() }}
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:13px">{{ av.auteur_nom }}</div>
+            <div style="font-size:11px;color:var(--text-muted)">{{ av.created_at[:10] }}</div>
+          </div>
+          <div style="margin-left:auto;font-size:16px;color:#f59e0b">
+            {% for i in range(1,6) %}{{ '★' if i <= av.note else '☆' }}{% endfor %}
+          </div>
+        </div>
+        {% if av.commentaire %}
+        <p style="font-size:13px;color:var(--text-muted);margin:0;line-height:1.6">{{ av.commentaire }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Aucun avis pour le moment. Soyez le premier à laisser un avis.</p>
+    {% endif %}
+
+    <!-- FORMULAIRE AVIS -->
+    {% if current_vendeur and current_vendeur.id != boutique.vendeur_id %}
+      {% if mon_avis %}
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--text-muted)">
+        ✅ Vous avez déjà laissé un avis pour cette boutique.
+      </div>
+      {% else %}
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px">Laisser un avis</h3>
+        <form action="/boutique/{{ boutique.slug }}/avis" method="POST">
+          <!-- Étoiles interactives -->
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:8px">Note *</label>
+            <div class="star-rating">
+              {% for i in [5,4,3,2,1] %}
+              <input type="radio" name="note" id="star{{ i }}" value="{{ i }}" required>
+              <label for="star{{ i }}" title="{{ i }} étoile{{ 's' if i > 1 else '' }}">★</label>
+              {% endfor %}
+            </div>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px">Commentaire (optionnel)</label>
+            <textarea name="commentaire" rows="3" placeholder="Décrivez votre expérience avec cette boutique..."
+              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;resize:vertical;box-sizing:border-box;background:var(--surface);color:var(--text)"
+              onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="padding:10px 24px">Publier mon avis</button>
+        </form>
+      </div>
+      {% endif %}
+    {% elif not current_vendeur %}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--text-muted)">
+      <a href="/connexion" style="color:var(--primary);font-weight:600">Connectez-vous</a> pour laisser un avis sur cette boutique.
+    </div>
+    {% endif %}
+  </section>
+
+</div>
+
+<style>
+.star-rating { display:flex; flex-direction:row-reverse; gap:4px; width:fit-content; }
+.star-rating input { display:none; }
+.star-rating label { font-size:28px; color:#d1d5db; cursor:pointer; transition:color .15s; }
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label { color:#f59e0b; }
+</style>
+{% endblock %}
