@@ -62,7 +62,7 @@
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ville *</label>
-            <select name="ville_id" required
+            <select name="ville_id" id="select-ville-b" required onchange="updateQuartiersBoutique(this.value)"
               style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;background:white"
               onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
               <option value="">Choisir…</option>
@@ -125,7 +125,7 @@
       
             <div style="margin-top:16px"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Logo (optionnel)</label><input type="file" name="logo" accept="image/*" style="width:100%;padding:8px;border:1px dashed #ccc;border-radius:8px;font-size:13px"></div>
             <div style="margin-top:12px"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Banniere (optionnel)</label><input type="file" name="banniere" accept="image/*" style="width:100%;padding:8px;border:1px dashed #ccc;border-radius:8px;font-size:13px"></div>
-<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Quartier / Zone <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><select name="quartier_id" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white"><option value="">Choisir un quartier...</option>{% for q in quartiers %}<option value="{{ q.id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>{% endfor %}</select></div></form>
+<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Quartier / Zone <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><select name="quartier_id" id="select-quartier-b" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white"><option value="">Selectionnez d'abord une ville</option>{% for q in quartiers %}<option value="{{ q.id }}" data-ville="{{ q.ville_id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>{% endfor %}<option value="autre" {% if form.quartier_libre %}selected{% endif %}>Autre (preciser)...</option></select><input type="text" name="quartier_libre" id="input-quartier-libre-b" placeholder="Precisez votre quartier..." value="{% if form.quartier_libre %}{{ form.quartier_libre }}{% endif %}" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;{% if not form.quartier_libre %}display:none;{% endif %}"></div></form>
     </div>
   </div>
 </div>
@@ -136,5 +136,26 @@
 const ta = document.querySelector('textarea[name=description]');
 const counter = document.getElementById('desc-count');
 ta.addEventListener('input', () => { counter.textContent = ta.value.length + ' / 500'; });
+
+function updateQuartiersBoutique(villeId) {
+  var sel = document.getElementById('select-quartier-b');
+  if (!sel) return;
+  var opts = sel.querySelectorAll('option[data-ville]');
+  opts.forEach(function(opt) { opt.style.display = (opt.dataset.ville === villeId) ? '' : 'none'; });
+  sel.value = '';
+  var lq = document.getElementById('input-quartier-libre-b');
+  if (lq) lq.style.display = 'none';
+}
+(function(){
+  var s = document.getElementById('select-quartier-b');
+  var inp = document.getElementById('input-quartier-libre-b');
+  if (!s || !inp) return;
+  s.addEventListener('change', function(){
+    inp.style.display = this.value === 'autre' ? '' : 'none';
+    if (this.value === 'autre') inp.focus();
+  });
+  var v = document.getElementById('select-ville-b');
+  if (v && v.value) updateQuartiersBoutique(v.value);
+})();
 </script>
 {% endblock %}

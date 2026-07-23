@@ -1542,7 +1542,16 @@ def creer_boutique():
                 logo_fname=save_image(request.files['logo'])
             if request.files.get('banniere') and request.files['banniere'].filename and allowed_file(request.files['banniere'].filename):
                 banniere_fname=save_image(request.files['banniere'])
-            quartier_id_b = form.get('quartier_id') or None
+            quartier_libre_b = form.get('quartier_libre', '').strip() or None
+            if form.get('quartier_id') == 'autre' and quartier_libre_b:
+                _q_slug = slugify(quartier_libre_b)
+                db.execute('INSERT OR IGNORE INTO quartiers (slug, nom, ville_id) VALUES (?,?,?)',
+                           (_q_slug, quartier_libre_b, ville_id))
+                db.commit()
+                _q_row = db.execute('SELECT id FROM quartiers WHERE slug=?', (_q_slug,)).fetchone()
+                quartier_id_b = _q_row['id'] if _q_row else None
+            else:
+                quartier_id_b = form.get('quartier_id') or None
             db.execute('''INSERT INTO boutiques
                 (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
@@ -1567,7 +1576,7 @@ def creer_boutique():
     mode_recruteur = request.args.get('from') == 'emploi'
     return render_template('pages/creer_boutique.html',
         villes=villes, categories=categories, vendeur=vendeur, form=form,
-        mode_recruteur=mode_recruteur)
+        quartiers=quartiers, mode_recruteur=mode_recruteur)
 
 # ════════════════════════════════════════════════════════════════════
 
