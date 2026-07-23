@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Admin · helloBiz{% endblock %}
+
+{% block content %}
+<div style="max-width:1200px;margin:0 auto;padding:24px 16px">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div>
+      <h1 style="font-size:22px;font-weight:800;color:var(--text)">Dashboard Admin</h1>
+      <div style="font-size:13px;color:var(--text-muted)">helloBiz — Panneau de gestion</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <a href="/admin/boutique-vedette" style="font-size:13px;color:white;font-weight:700;padding:8px 14px;background:#f5c518;border-radius:var(--radius-sm);text-decoration:none;margin-right:4px">Boutique du Jour</a>
+      <a href="/admin/publicites" style="font-size:13px;color:white;font-weight:700;padding:8px 14px;background:var(--primary);border-radius:var(--radius-sm)">
+        <i class="ti ti-ad"></i> Publicités
+      </a>
+      <a href="/" style="font-size:13px;color:var(--primary);font-weight:600">← Retour au site</a>
+    </div>
+  </div>
+
+  <!-- Toggle Plan Gratuit -->
+<div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+  <div>
+    <div style="font-weight:700;font-size:14px;color:var(--text)">&#9881; Quota plan Gratuit</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">
+      Mode actuel : <strong>{{ 'Quotidien (24h)' if plan_gratuit_periode == 'daily' else 'Mensuel' }}</strong>
+    </div>
+  </div>
+  <form action="/admin/config/toggle-plan-periode" method="POST">
+    <button type="submit" style="background:{{ '#10b981' if plan_gratuit_periode == 'daily' else '#6b7280' }};color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">
+      {{ 'Daily actif - Passer en Mensuel' if plan_gratuit_periode == 'daily' else 'Activer le Daily (24h)' }}
+    </button>
+  </form>
+</div>
+
+<!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Vendeurs</div>
+      {% if stats.paiements_attente > 0 or stats.boutiques_attente > 0 or stats.nb_bugs_ouverts > 0 %}
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+  {% if stats.paiements_attente > 0 %}
+  <a href="#" onclick="showTab('paiements');return false;" style="display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    ⏳ {{ stats.paiements_attente }} paiement(s) en attente de confirmation
+  </a>
+  {% endif %}
+  {% if stats.boutiques_attente > 0 %}
+  <a href="#" onclick="showTab('boutiques');return false;" style="display:flex;align-items:center;gap:8px;background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    🔴 {{ stats.boutiques_attente }} boutique(s) en attente d'activation
+  </a>
+  {% endif %}
+  {% if stats.nb_bugs_ouverts > 0 %}
+  <a href="/admin/bugs" style="color:inherit">Signalements</a></li>
+        <li><a href="/admin/cvtheque" style="display:flex;align-items:center;gap:8px;background:#fde8e8;border:1px solid #dc2626;color:#7b1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    🐛 {{ stats.nb_bugs_ouverts }} signalement(s) de bug en attente
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<div style="margin-bottom:12px"><a href="/admin/alertes-emploi" style="display:block;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--text);margin-bottom:10px">Alertes Emploi WhatsApp</a>
+<div style="margin-bottom:12px"><a href="/admin/relance-vendeurs" style="display:block;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--text);margin-bottom:10px">📲 Relance vendeurs sans annonce</a>
+<a href="/admin/verifications" style="display:inline-flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">&#10003; Verifications boutiques</a></div><div style="margin-bottom:12px"><a href="/admin/blog" style="display:inline-flex;align-items:center;gap:8px;background:#e0f2fe;border:1px solid #0284c7;color:#075985;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">&#128221; Blog — Gerer les articles</a></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+  <div style="background:var(--dark);border:1px solid rgba(0,183,170,.2);border-radius:var(--radius);padding:18px">
+    <div style="font-size:11px;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">CA ce mois</div>
+    <div style="font-size:24px;font-weight:800;color:white">{{ "{:,}".format(stats.ca_mois|int).replace(",", " ") }}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">FCFA</div>
+  </div>
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px">
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">CA total</div>
+    <div style="font-size:24px;font-weight:800;color:var(--primary)">{{ "{:,}".format(stats.ca_total|int).replace(",", " ") }}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">FCFA</div>
+  </div>
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px">
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Paiements confirmés</div>
+    <div style="font-size:24px;font-weight:800;color:var(--text)">{{ stats.nb_paiements }}</div>
+  </div>
+  <div style="background:{% if stats.paiements_attente > 0 %}#fef3c7{% else %}var(--card-bg){% endif %};border:1px solid {% if stats.paiements_attente > 0 %}#f59e0b{% else %}var(--border){% endif %};border-radius:var(--radius);padding:18px">
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">En attente</div>
+    <div style="font-size:24px;font-weight:800;color:{% if stats.paiements_attente > 0 %}#92400e{% else %}var(--text){% endif %}">{{ stats.paiements_attente }}</div>
+  </div>
+</div>
+
+<div style="font-size:28px;font-weight:800;color:var(--text)">{{ stats.nb_vendeurs }}</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Boutiques</div>
+      <div style="font-size:28px;font-weight:800;color:var(--text)">{{ stats.nb_boutiques }}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">{{ stats.nb_pro }} Pro · {{ stats.nb_premium }} Premium</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Annonces actives</div>
+      <div style="font-size:28px;font-weight:800;color:var(--text)">{{ stats.nb_annonces }}</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Paiements confirmés</div>
+      <div style="font-size:28px;font-weight:800;color:var(--text)">{{ stats.nb_paiements }}</div>
+    </div>
+    <div style="background:var(--primary);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:11px;color:rgba(255,255,255,.8);text-transform:uppercase;margin-bottom:6px">CA Total</div>
+      <div style="font-size:22px;font-weight:800;color:white">{{ "{:,}".format(stats.ca_total|int).replace(",", " ") }}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">FCFA</div>
+    </div>
+  </div>
+
+    <!-- ── Bloc Visites du site ── -->
+  <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:28px">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px">
+      📊 Visites du site <span style="font-weight:400;color:var(--text-muted);font-size:12px">(tracker interne)</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+      <div style="text-align:center;padding:12px;background:var(--bg-light);border-radius:8px">
+        <div style="font-size:24px;font-weight:800;color:var(--primary)">{{ stats.visites_today }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Aujourd'hui</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg-light);border-radius:8px">
+        <div style="font-size:24px;font-weight:800;color:var(--primary)">{{ stats.visites_7j }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">7 derniers jours</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg-light);border-radius:8px">
+        <div style="font-size:24px;font-weight:800;color:var(--primary)">{{ stats.visites_30j }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">30 derniers jours</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg-light);border-radius:8px">
+        <div style="font-size:24px;font-weight:800;color:#6c757d">{{ stats.visites_total }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Total depuis l'origine</div>
+      </div>
+    </div>
+    {% if stats.top_pages %}
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px">Pages les plus visitées</div>
+      {% for page in stats.top_pages %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f0f0;">
+        <span style="font-size:13px;color:var(--text);font-family:monospace">{{ page.path }}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--primary)">{{ page.nb }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div style="margin-top:12px;font-size:11px;color:var(--text-muted)">
+      💡 Pour des analyses avancées (pays, source de trafic, appareils) — connectez Google Analytics.
+    </div>
+  </div>
+  <!-- ── Fin Bloc Visites ── -->
+
+  <!-- Navigation onglets -->
+  <div style="display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border)">
+    <button onclick="showTab('vendeurs')" id="tab-vendeurs" class="admin-tab active">👥 Vendeurs ({{ stats.nb_vendeurs }})</button>
+    <button onclick="showTab('boutiques')" id="tab-boutiques" class="admin-tab">🏪 Boutiques ({{ stats.nb_boutiques }})</button>
+    <button onclick="showTab('annonces')" id="tab-annonces" class="admin-tab">📢 Annonces</button>
+    <button onclick="showTab('emploi')" id="tab-emploi" class="admin-tab">💼 Emploi ({{ stats.nb_emploi }}){% if stats.nb_emploi_attente > 0 %} <span style="background:#ff6b35;color:white;border-radius:10px;padding:1px 7px;font-size:11px">{{ stats.nb_emploi_attente }} en attente</span>{% endif %}</button>
+    <button onclick="showTab('paiements')" id="tab-paiements" class="admin-tab">💳 Paiements</button>
+      <button onclick="showTab('en-attente')" id="tab-en-attente" class="admin-tab">&#9203; En attente ({{ boutiques_en_attente|length }})</button>
+  </div>
+
+  <!-- TAB VENDEURS -->
+  <div id="panel-vendeurs">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg-light)">
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Vendeur</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Boutique</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Plan</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Statut</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vendeurs %}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:10px 14px">
+              <div style="font-weight:600">{{ v.nom }}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{ v.email }}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{ v.telephone }}</div>
+            </td>
+            <td style="padding:10px 14px">{{ v.boutique_nom or '—' }}</td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
+                background:{% if v.plan=='premium' %}#fef3c7{% elif v.plan=='pro' %}#e0f2fe{% else %}#f3f4f6{% endif %};
+                color:{% if v.plan=='premium' %}#92400e{% elif v.plan=='pro' %}#0369a1{% else %}#6b7280{% endif %}">
+                {{ (v.plan or 'starter')|capitalize }}
+              </span>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+                background:{% if v.actif %}#e0f7f0{% else %}#fde8e8{% endif %};
+                color:{% if v.actif %}#0a5c3b{% else %}#7b1c1c{% endif %}">
+                {% if v.actif %}Actif{% else %}Suspendu{% endif %}
+              </span>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <form action="/admin/vendeur/{{ v.id }}/toggle-ambassadeur" method="POST" style="display:inline;margin-right:4px"><button type="submit" style="background:{% if v.is_ambassadeur %}#f59e0b{% else %}#6366f1{% endif %};color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">{% if v.is_ambassadeur %}★ Ambassadeur{% else %}Nommer Amb.{% endif %}</button></form> <form action="/admin/vendeur/{{ v.id }}/reset-mdp" method="post" style="display:inline;" onsubmit="return confirm('Réinitialiser le MDP de {{ v.nom }} ?')"><button type="submit" style="background:#e55;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:12px;cursor:pointer;">🔑 MDP</button></form><form action="/admin/vendeur/{{ v.id }}/toggle" method="POST" style="display:inline">
+                <button type="submit" style="padding:4px 12px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid;
+                  {% if v.actif %}background:#fef2f2;color:#dc2626;border-color:#fca5a5{% else %}background:#e0f7f0;color:#059669;border-color:#6ee7b7{% endif %}">
+                  {% if v.actif %}Suspendre{% else %}Réactiver{% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text-muted)">Aucun vendeur</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB ANNONCES -->
+  <div id="panel-annonces" style="display:block">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg-light)">
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Annonce</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Boutique</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Prix</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Vues</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Statut</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in annonces %}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:10px 14px">
+              <div style="font-weight:600">{{ a.titre[:45] }}{% if a.titre|length > 45 %}…{% endif %}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{ a.cat_nom }} · {{ a.ville_nom }}</div>
+            </td>
+            <td style="padding:10px 14px;font-size:12px">{{ a.boutique_nom or '—' }}</td>
+            <td style="padding:10px 14px;text-align:center;font-weight:600;color:var(--primary-dark)">
+              {% if a.prix_type == 'negociable' or a.prix == 0 %}À négocier
+              {% elif a.prix_type == 'mois' %}{{ "{:,.0f}".format(a.prix).replace(',', ' ') }}/mois
+              {% else %}{{ "{:,.0f}".format(a.prix).replace(',', ' ') }}{% endif %}
+            </td>
+            <td style="padding:10px 14px;text-align:center">{{ a.vues }}</td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+                background:{% if a.statut=='active' %}#e0f7f0{% elif a.statut=='supprime' %}#fde8e8{% else %}#fef3c7{% endif %};
+                color:{% if a.statut=='active' %}#0a5c3b{% elif a.statut=='supprime' %}#7b1c1c{% else %}#854d0e{% endif %}">
+                {{ a.statut|capitalize }}
+              </span>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <div style="display:flex;gap:6px;justify-content:center">
+                <a href="/annonce/{{ a.slug }}" target="_blank" style="padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:11px;color:var(--text-muted);white-space:nowrap">
+                  <i class="ti ti-eye"></i> Voir
+                </a>
+                {% if a.statut != 'supprime' %}
+                <form action="/admin/annonce/{{ a.slug }}/bon-plan" method="POST" style="display:inline">
+                  {% if a.bon_plan %}
+                    <input type="hidden" name="action" value="desactiver">
+                    <button type="submit" style="background:#fef3c7;color:#d97706;border:1px solid #fcd34d;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer" title="Desactiver bon plan">🔥 Actif</button>
+                  {% else %}
+                    <input type="hidden" name="action" value="activer">
+                    <button type="submit" style="background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer" title="Activer bon plan (Premium uniquement)">🔥</button>
+                  {% endif %}
+                </form>
+                <a href="/modifier-annonce/{{ a.slug }}" style="padding:4px 10px;border:1px solid #93c5fd;border-radius:var(--radius-sm);font-size:11px;color:#1d4ed8;background:#eff6ff;white-space:nowrap">
+                  <i class="ti ti-pencil"></i> Modifier
+                </a>
+
+                <form action="/admin/annonce/{{ a.id }}/supprimer" method="POST" style="display:inline">
+                  <button type="submit" onclick="return confirm('Supprimer cette annonce ?')"
+                    style="padding:4px 10px;border:1px solid #fca5a5;border-radius:var(--radius-sm);font-size:11px;color:#dc2626;background:#fef2f2;cursor:pointer;white-space:nowrap">
+                    <i class="ti ti-trash"></i> Suppr.
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-muted)">Aucune annonce</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB BOUTIQUES -->
+  <div id="panel-boutiques" style="display:none;margin-bottom:32px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg-light)">
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Boutique</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Vendeur</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Plan</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Avis</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Badge vérifié</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in boutiques %}
+          {% set alerte_rouge = b.nb_avis >= 5 and b.note_moy < 2.5 %}
+          {% set alerte_orange = b.nb_avis >= 3 and b.note_moy < 3.0 and not alerte_rouge %}
+          <tr style="border-top:1px solid var(--border);background:{% if alerte_rouge %}#fff5f5{% elif alerte_orange %}#fffbeb{% else %}white{% endif %}">
+            <td style="padding:10px 14px">
+              <div style="display:flex;align-items:center;gap:6px">
+                {% if alerte_rouge %}<span style="font-size:16px" title="Alerte critique — action requise">🔴</span>
+                {% elif alerte_orange %}<span style="font-size:16px" title="Avis négatifs — à surveiller">🟠</span>{% endif %}
+                <div>
+                  <a href="/boutique/{{ b.slug }}" target="_blank" style="font-weight:700;color:var(--primary)">{{ b.nom }}</a>
+                  <div style="font-size:11px;color:var(--text-muted)">{{ b.created_at[:10] }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding:10px 14px">
+              <div style="font-weight:600">{{ b.vendeur_nom }}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{ b.vendeur_email }}</div>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <span class="plan-badge {{ b.plan }}">{{ b.plan }}</span>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              {% if b.nb_avis > 0 %}
+              <div style="font-size:13px;font-weight:700;color:{% if alerte_rouge %}#dc2626{% elif alerte_orange %}#d97706{% else %}#0a5c3b{% endif %}">
+                {{ '★' * b.note_moy|int }}{{ '☆' * (5 - b.note_moy|int) }}
+              </div>
+              <div style="font-size:11px;color:var(--text-muted)">{{ b.note_moy }}/5 · {{ b.nb_avis }} avis</div>
+              {% if alerte_rouge %}
+              <div style="font-size:10px;font-weight:700;color:#dc2626;background:#fde8e8;padding:2px 6px;border-radius:4px;margin-top:3px">⚠ Action requise</div>
+              {% elif alerte_orange %}
+              <div style="font-size:10px;font-weight:700;color:#d97706;background:#fef3c7;padding:2px 6px;border-radius:4px;margin-top:3px">⚠ À surveiller</div>
+              {% endif %}
+              {% else %}
+              <span style="font-size:12px;color:var(--text-muted)">—</span>
+              {% endif %}
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              {% if b.badge_verifie %}
+              <span style="font-size:13px;font-weight:700;color:#0a5c3b;background:#e0f7f0;padding:3px 10px;border-radius:20px">✓ Vérifié</span>
+              {% else %}
+              <span style="font-size:13px;color:var(--text-muted);background:var(--surface);padding:3px 10px;border-radius:20px">Non vérifié</span>
+              {% endif %}
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+                <!-- Badge vérifié -->
+                <form action="/admin/boutique/{{ b.id }}/toggle-badge" method="POST">
+                  <button type="submit"
+                    style="padding:4px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;border:none;
+                    background:{% if b.badge_verifie %}#fde8e8{% else %}#e0f7f0{% endif %};
+                    color:{% if b.badge_verifie %}#dc2626{% else %}#0a5c3b{% endif %}">
+                    {% if b.badge_verifie %}✕ Retirer badge{% else %}✓ Vérifier{% endif %}
+                  </button>
+                </form>
+                <!-- Changer le plan -->
+                {% if not b.actif %}
+                <form action="/admin/boutique/{{ b.id }}/valider" method="POST" style="display:inline;margin-right:4px">
+                  <input type="hidden" name="action" value="valider">
+                  <button type="submit" style="background:#16a34a;color:white;border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✓ Valider</button>
+                </form>
+                <form action="/admin/boutique/{{ b.id }}/valider" method="POST" style="display:inline;margin-right:4px" onsubmit="return confirm('Refuser et supprimer cette boutique ?')">
+                  <input type="hidden" name="action" value="refuser">
+                  <button type="submit" style="background:#dc2626;color:white;border:none;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">✗ Refuser</button>
+                </form>
+                {% endif %}
+                <form action="/admin/boutique/{{ b.id }}/set-plan" method="POST" style="display:flex;gap:4px">
+                  <select name="plan" style="font-size:10px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:white">
+                    {% for p in ['gratuit','starter','pro','premium','business'] %}
+                    <option value="{{ p }}" {% if b.plan == p %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit"
+                    style="padding:3px 8px;border-radius:var(--radius-sm);font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--primary);color:var(--dark)">
+                    ↗
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text-muted)">Aucune boutique</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+    <!-- TAB EMPLOI -->
+  <div id="panel-emploi" style="display:none;margin-bottom:32px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:var(--bg-light)">
+          <th style="padding:12px 14px;text-align:left;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">Titre</th>
+          <th style="padding:12px 14px;text-align:left;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">Entreprise</th>
+          <th style="padding:12px 14px;text-align:left;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">Secteur</th>
+          <th style="padding:12px 14px;text-align:center;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">Statut</th>
+          <th style="padding:12px 14px;text-align:left;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">Date</th>
+          <th style="padding:12px 14px;text-align:center;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for o in offres_emploi %}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:10px 14px"><a href="/annonce/{{ o.slug }}" target="_blank" style="font-weight:600;color:var(--primary);text-decoration:none">{{ o.titre[:55] }}{% if o.titre|length > 55 %}…{% endif %}</a></td>
+            <td style="padding:10px 14px;font-size:12px;color:var(--text-muted)">{{ o.boutique_nom or '—' }}</td>
+            <td style="padding:10px 14px;font-size:12px">{{ o.emploi_secteur or '—' }}</td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:{% if o.statut=='active' %}#e0f7f0{% elif o.statut=='masquee' %}#fef3c7{% else %}#fde8e8{% endif %};color:{% if o.statut=='active' %}#0a5c3b{% elif o.statut=='masquee' %}#854d0e{% else %}#7b1c1c{% endif %}">
+                {% if o.statut=='active' %}✓ Active{% elif o.statut=='masquee' %}⏸ Masquée{% else %}✕ {{ o.statut }}{% endif %}
+              </span>
+            </td>
+            <td style="padding:10px 14px;font-size:11px;color:var(--text-muted)">{{ o.created_at[:10] if o.created_at else '—' }}</td>
+            <td style="padding:10px 14px;text-align:center;white-space:nowrap">
+              <form action="/admin/emploi/{{ o.id }}/toggle" method="POST" style="display:inline">
+                <button type="submit" style="padding:4px 10px;background:{% if o.statut=='active' %}#fef3c7{% else %}#e0f7f0{% endif %};color:{% if o.statut=='active' %}#854d0e{% else %}#0a5c3b{% endif %};border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;margin-right:4px">
+                  {% if o.statut=='active' %}Masquer{% else %}Activer{% endif %}
+                </button>
+              </form>
+              <form action="/admin/emploi/{{ o.id }}/supprimer" method="POST" style="display:inline" onsubmit="return confirm('Supprimer définitivement ?')">
+                <button type="submit" style="padding:4px 10px;background:#fde8e8;color:#7b1c1c;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer">Supprimer</button>
+              </form>
+              {% if o.statut == 'en_attente' %}
+              <form action="/admin/emploi/{{ o.id }}/approuver" method="POST" style="margin-top:4px">
+                <button type="submit" style="padding:6px 14px;background:#00C9A7;color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;width:100%">✅ Approuver</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-muted)">Aucune offre d'emploi</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB PAIEMENTS -->
+  <div id="panel-paiements" style="display:block; margin-bottom:32px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg-light)">
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Référence</th>
+            <th style="padding:10px 14px;text-align:left;font-weight:700;color:var(--text-muted)">Vendeur</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Opérateur</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Montant</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Type</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Statut</th>
+            <th style="padding:10px 14px;text-align:center;font-weight:700;color:var(--text-muted)">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in paiements %}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:10px 14px">
+              <span style="font-family:monospace;font-weight:700;color:var(--primary);font-size:12px">{{ p.reference }}</span>
+              <div style="font-size:11px;color:var(--text-muted)">{{ p.created_at[:16] }}</div>
+            </td>
+            <td style="padding:10px 14px">
+              <div style="font-weight:600">{{ p.vendeur_nom }}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{ p.telephone }}</div>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-weight:700;font-size:12px;padding:3px 10px;border-radius:20px;
+                background:{% if p.operateur=='mtn' %}#FFF8E1{% else %}#FFEBEE{% endif %};
+                color:{% if p.operateur=='mtn' %}#E65100{% else %}#C62828{% endif %}">
+                {% if p.operateur=='mtn' %}MTN{% else %}Airtel{% endif %}
+              </span>
+            </td>
+            <td style="padding:10px 14px;text-align:center;font-weight:700;color:var(--primary-dark)">
+              {{ "{:,}".format(p.montant|int).replace(",", " ") }} F
+            </td>
+            <td style="padding:10px 14px;text-align:center;font-size:12px">
+              {% if p.type == 'upgrade' %}⬆ Plan {{ p.plan_cible|capitalize }}
+              {% else %}🚀 Boost{% endif %}
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+                background:{% if p.statut=='confirme' %}#e0f7f0{% elif p.statut=='en_attente' %}#fef3c7{% else %}#fde8e8{% endif %};
+                color:{% if p.statut=='confirme' %}#0a5c3b{% elif p.statut=='en_attente' %}#854d0e{% else %}#7b1c1c{% endif %}">
+                {% if p.statut=='confirme' %}✓ Confirmé{% elif p.statut=='en_attente' %}⏳ En attente{% else %}Annulé{% endif %}
+              </span>
+            </td>
+            <td style="padding:10px 14px;text-align:center">
+              {% if p.statut == 'en_attente' %}
+              <form action="/admin/paiement/{{ p.reference }}/confirmer" method="POST" style="display:inline">
+                <button type="submit" style="padding:4px 10px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer">
+                  Confirmer
+                </button>
+              </form>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" style="padding:30px;text-align:center;color:var(--text-muted)">Aucun paiement</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="panel-en-attente" style="display:none;margin-bottom:32px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:16px;color:var(--accent)">
+      &#9203; Boutiques en attente de validation ({{ boutiques_en_attente|length }})
+    </div>
+    {% if boutiques_en_attente %}
+      {% for b in boutiques_en_attente %}
+      <div style="background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-weight:700;font-size:15px">{{ b.nom }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ b.vendeur_nom }} &middot; {{ b.vendeur_tel }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">Plan : {{ b.plan }} &middot; {{ b.created_at[:10] }}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <form method="POST" action="/admin/boutique/{{ b.id }}/valider" style="display:inline">
+              <button type="submit" style="background:#16a34a;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">&#10003; Approuver</button>
+            </form>
+            <form method="POST" action="/admin/boutique/{{ b.id }}/rejeter" style="display:inline" onsubmit="return confirm('Supprimer cette boutique ?')">
+              <button type="submit" style="background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600">&#10007; Rejeter</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="color:var(--text-muted);text-align:center;padding:32px">Aucune boutique en attente.</div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.admin-tab {
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: -2px;
+}
+.admin-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+</style>
+
+<script>
+function showTab(name) {
+  ['vendeurs','boutiques','annonces','emploi','paiements','en-attente'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+}
+// Ouvrir le bon onglet selon l'ancre
+const hash = window.location.hash.replace('#','');
+if (['vendeurs','boutiques','annonces','emploi','paiements','en-attente'].includes(hash)) showTab(hash);
+</script>
+<div style='margin:32px 0;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px'><h3 style='margin-bottom:12px'>🤝 Ambassadeurs helloBiz</h3>{% if ambassadeurs %}<table style='width:100%;border-collapse:collapse'><tr style='border-bottom:2px solid var(--border)'><th style='padding:8px'>Code</th><th style='padding:8px;text-align:center'>Recrutés</th><th style='padding:8px'>Lien</th><th style='padding:8px'>Actions</th></tr>{% for a in ambassadeurs %}<tr style='border-bottom:1px solid var(--border)'><td style='padding:8px;font-weight:700'>{{ a.ref_code }}</td><td style='padding:8px;text-align:center;color:#22c55e;font-weight:700'>{{ a.nb_recrutes }}</td><td style='padding:8px;font-size:11px'>/inscription?ref={{ a.ref_code }}</td><td style='padding:8px'><form method='POST' action='/admin/vendeur/{{ a.id }}/toggle-ambassadeur' style='margin:0'><button type='submit' style='background:#ef4444;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px'>Révoquer</button></form> <form action="/admin/vendeur/{{ v.id }}/reset-mdp" method="post" style="display:inline;" onsubmit="return confirm('Réinitialiser le MDP de {{ v.nom }} ?')"><button type="submit" style="background:#e55;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:12px;cursor:pointer;">🔑 MDP</button></form></td></tr>{% endfor %}</table>{% else %}<p style='color:var(--text-muted);padding:20px;text-align:center'>Aucun ambassadeur actif.</p>{% endif %}</div>
+{% endblock %}
