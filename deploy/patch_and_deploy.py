@@ -532,6 +532,29 @@ c, ch = apply_patch(
 )
 changed = changed or ch
 
+c, ch = apply_patch(
+    c,
+    """    boutiques_attente = db.execute(
+        "SELECT COUNT(*) FROM boutiques WHERE actif=0"
+    ).fetchone()[0]""",
+    """    boutiques_attente = db.execute(
+        "SELECT COUNT(*) FROM boutiques WHERE actif=0"
+    ).fetchone()[0]
+    boutiques_non_verifiees = db.execute(
+        "SELECT COUNT(*) FROM boutiques WHERE actif=1 AND badge_verifie=0"
+    ).fetchone()[0]""",
+    "ajout du calcul des boutiques actives non verifiees pour la notification admin",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "        'boutiques_attente': boutiques_attente,",
+    "        'boutiques_attente': boutiques_attente,\n        'boutiques_non_verifiees': boutiques_non_verifiees,",
+    "ajout de boutiques_non_verifiees dans le dict stats",
+)
+changed = changed or ch
+
 if changed:
     put_file(path, c)
     print("  -> fichier mis a jour sur le serveur")
@@ -640,6 +663,45 @@ c, ch = apply_patch(
   </a>
   {% endif %}''',
     "corrige le lien de notification boutiques en attente pour pointer vers l\'onglet En attente (avec les boutons Approuver/Rejeter) au lieu de l\'onglet Boutiques (simple liste)",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "{% if stats.paiements_attente > 0 or stats.boutiques_attente > 0 or stats.nb_bugs_ouverts > 0 %}",
+    "{% if stats.paiements_attente > 0 or stats.boutiques_attente > 0 or stats.boutiques_non_verifiees > 0 or stats.nb_bugs_ouverts > 0 %}",
+    "inclut boutiques_non_verifiees dans la condition d'affichage du bandeau de notifications",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    """  {% if stats.boutiques_attente > 0 %}
+  <a href="#" onclick="showTab(\'en-attente\');return false;" style="display:flex;align-items:center;gap:8px;background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    \U0001F534 {{ stats.boutiques_attente }} boutique(s) en attente d\'activation
+  </a>
+  {% endif %}""",
+    """  {% if stats.boutiques_attente > 0 %}
+  <a href="#" onclick="showTab(\'en-attente\');return false;" style="display:flex;align-items:center;gap:8px;background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    \U0001F534 {{ stats.boutiques_attente }} boutique(s) en attente d\'activation
+  </a>
+  {% endif %}
+  {% if stats.boutiques_non_verifiees > 0 %}
+  <a href="#" onclick="showTab(\'boutiques\');return false;" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    \U0001F7E1 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)
+  </a>
+  {% endif %}""",
+    "ajout d'une notification dediee pour les boutiques actives non verifiees, avec lien direct vers l'onglet Boutiques",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    """<div id="panel-boutiques" style="display:none;margin-bottom:32px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">""",
+    """<div id="panel-boutiques" style="display:none;margin-bottom:32px">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;box-shadow:var(--shadow)">""",
+    "autorise le scroll horizontal du tableau Boutiques pour que le bouton Verifier reste atteignable sur mobile",
 )
 changed = changed or ch
 
