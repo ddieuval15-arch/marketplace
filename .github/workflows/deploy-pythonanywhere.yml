@@ -34,11 +34,13 @@ jobs:
 
       - name: Publier le snapshot live (si genere)
         run: |
-          if [ -f "live_snapshot_app.py" ] || [ -f "live_snapshot_database.py" ]; then
+          shopt -s nullglob
+          FILES=(live_snapshot_*.py live_snapshot_*.html)
+          if [ ${#FILES[@]} -gt 0 ]; then
             git config user.email "ddieuval15@gmail.com"
             git config user.name "helloBiz Bot"
-            git add live_snapshot_app.py live_snapshot_database.py 2>/dev/null || true
-            git commit -m "Snapshot live app.py/database.py pour fusion" || echo "rien a committer"
+            git add "${FILES[@]}"
+            git commit -m "Snapshot live pour fusion" || echo "rien a committer"
             git push
           else
             echo "Pas de snapshot genere"
