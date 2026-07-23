@@ -276,19 +276,19 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
-# --- Verification temporaire de derive (app.py / database.py) ---
-import hashlib
-for _fname in ["app.py", "database.py"]:
+# --- Snapshot temporaire du app.py / database.py reellement en ligne ---
+# Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
+# commit/push par l'etape suivante du workflow -- permet de les lire
+# directement via git au lieu de les extraire via les annotations
+# (trop volumineux et coupees au premier retour a la ligne).
+for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py")]:
     try:
         _live = get_file(_fname)
-        with open(_fname, "r", encoding="utf-8") as _f:
-            _local_repo = _f.read()
-        _h_live = hashlib.sha256(_live.encode("utf-8")).hexdigest()[:12]
-        _h_repo = hashlib.sha256(_local_repo.encode("utf-8")).hexdigest()[:12]
-        _same = (_h_live == _h_repo)
-        print(f"::warning::[DRIFT-CHECK {_fname}] identique_au_repo={_same} | hash_live={_h_live} lignes_live={len(_live.splitlines())} | hash_repo={_h_repo} lignes_repo={len(_local_repo.splitlines())}")
+        with open(_out, "w", encoding="utf-8") as _f:
+            _f.write(_live)
+        print(f"[SNAPSHOT] {_fname} -> {_out} ({len(_live.splitlines())} lignes)")
     except Exception as e:
-        print(f"::warning::[DRIFT-CHECK {_fname}] exception: {e}")
+        print(f"::warning::[SNAPSHOT {_fname}] exception: {e}")
 
 print("=== reload de l'application ===")
 reload_app()

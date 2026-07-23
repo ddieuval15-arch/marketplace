@@ -8,6 +8,9 @@ on:
       - 'deploy/**'
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -28,3 +31,15 @@ jobs:
           PA_API_TOKEN: ${{ secrets.PA_API_TOKEN }}
           PA_USERNAME: donytchicaya
         run: python deploy/patch_and_deploy.py
+
+      - name: Publier le snapshot live (si genere)
+        run: |
+          if [ -f "live_snapshot_app.py" ] || [ -f "live_snapshot_database.py" ]; then
+            git config user.email "ddieuval15@gmail.com"
+            git config user.name "helloBiz Bot"
+            git add live_snapshot_app.py live_snapshot_database.py 2>/dev/null || true
+            git commit -m "Snapshot live app.py/database.py pour fusion" || echo "rien a committer"
+            git push
+          else
+            echo "Pas de snapshot genere"
+          fi
