@@ -281,7 +281,7 @@ else:
 # commit/push par l'etape suivante du workflow -- permet de les lire
 # directement via git au lieu de les extraire via les annotations
 # (trop volumineux et coupees au premier retour a la ligne).
-for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py")]:
+for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html")]:
     try:
         _live = get_file(_fname)
         with open(_out, "w", encoding="utf-8") as _f:
