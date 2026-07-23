@@ -2405,6 +2405,9 @@ def admin():
     boutiques_attente = db.execute(
         "SELECT COUNT(*) FROM boutiques WHERE actif=0"
     ).fetchone()[0]
+    boutiques_non_verifiees = db.execute(
+        "SELECT COUNT(*) FROM boutiques WHERE actif=1 AND badge_verifie=0"
+    ).fetchone()[0]
 
     stats = {
         'nb_vendeurs':   db.execute('SELECT COUNT(*) FROM vendeurs WHERE is_admin=0').fetchone()[0],
@@ -2419,6 +2422,7 @@ def admin():
         'ca_mois':           ca_mois,
         'paiements_attente': paiements_attente,
         'boutiques_attente': boutiques_attente,
+        'boutiques_non_verifiees': boutiques_non_verifiees,
         'nb_bugs_ouverts':   db.execute("SELECT COUNT(*) FROM bug_reports WHERE statut='ouvert'").fetchone()[0],
     'visites_today':      db.execute("SELECT COUNT(*) FROM site_visits WHERE DATE(visited_at)=DATE('now')").fetchone()[0],
     'visites_7j':         db.execute("SELECT COUNT(*) FROM site_visits WHERE visited_at >= DATETIME('now','-7 days')").fetchone()[0],

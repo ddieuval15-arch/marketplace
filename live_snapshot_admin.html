@@ -38,7 +38,7 @@
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px">
     <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
       <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">Vendeurs</div>
-      {% if stats.paiements_attente > 0 or stats.boutiques_attente > 0 or stats.nb_bugs_ouverts > 0 %}
+      {% if stats.paiements_attente > 0 or stats.boutiques_attente > 0 or stats.boutiques_non_verifiees > 0 or stats.nb_bugs_ouverts > 0 %}
 <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px">
   {% if stats.paiements_attente > 0 %}
   <a href="#" onclick="showTab('paiements');return false;" style="display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
@@ -48,6 +48,11 @@
   {% if stats.boutiques_attente > 0 %}
   <a href="#" onclick="showTab('en-attente');return false;" style="display:flex;align-items:center;gap:8px;background:#fee2e2;border:1px solid #ef4444;color:#7f1d1d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
     🔴 {{ stats.boutiques_attente }} boutique(s) en attente d'activation
+  </a>
+  {% endif %}
+  {% if stats.boutiques_non_verifiees > 0 %}
+  <a href="#" onclick="showTab('boutiques');return false;" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    🟡 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)
   </a>
   {% endif %}
   {% if stats.nb_bugs_ouverts > 0 %}
@@ -282,7 +287,7 @@
 
   <!-- TAB BOUTIQUES -->
   <div id="panel-boutiques" style="display:none;margin-bottom:32px">
-    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;box-shadow:var(--shadow)">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr style="background:var(--bg-light)">
