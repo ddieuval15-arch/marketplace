@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+{% block title %}Déposer une annonce · helloBiz{% endblock %}
+
+{% block head %}
+<style>
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--surface);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.upload-zone i { font-size: 36px; color: var(--primary); display: block; margin-bottom: 8px; }
+.photo-previews { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+@media (max-width:640px) { .photo-previews { grid-template-columns: repeat(2, 1fr); } }
+.photo-thumb {
+  position: relative; aspect-ratio: 4/3;
+  border-radius: var(--radius-sm); overflow: hidden;
+  border: 2px solid var(--border);
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb .remove-btn {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,.6); color: white;
+  border: none; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+.photo-thumb.principal { border-color: var(--primary); }
+.photo-thumb.principal::after {
+  content: 'Principale';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--primary); color: var(--dark);
+  font-size: 9px; font-weight: 700; text-align: center; padding: 2px;
+}
+.mode-complet { transition: all .2s; }
+.banner-simple {
+  background: linear-gradient(135deg,rgba(0,183,170,.12),rgba(0,183,170,.06));
+  border: 1px solid rgba(0,183,170,.3);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--bg);padding:40px 16px;min-height:80vh;position:relative">
+  <div style="max-width:680px;margin:0 auto">
+
+    <div style="text-align:center;margin-bottom:24px">
+      <h1 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px">Déposer une annonce</h1>
+      <p style="font-size:13px;color:var(--text-muted)">
+        Boutique : <strong>{{ boutique.nom }}</strong> ·
+        <span style="color:var(--text-light)">{{ annonces_restantes }} annonce{{ 's' if annonces_restantes > 1 }} disponible{{ 's' if annonces_restantes > 1 }}</span>
+      </p>
+    </div>
+
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-md)">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="flash {{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/deposer-annonce" enctype="multipart/form-data">
+
+        {# ── Champ caché : mode formulaire ── #}
+        <input type="hidden" name="mode_simple" id="mode_simple_input" value="{{ '1' if mode_simple else '0' }}">
+
+        {# ── Bannière mode simple ── #}
+        {% if mode_simple %}
+        <div class="banner-simple" id="banner-simple">
+          <i class="ti ti-bolt" style="color:var(--primary);font-size:20px;flex-shrink:0;margin-top:2px"></i>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Formulaire rapide</div>
+            <div style="font-size:12px;color:var(--text-muted)">3 champs suffisent pour publier. Besoin d'ajouter une description, une ville précise ?
+              <a href="#" onclick="switchToFullMode();return false;" style="color:var(--primary);font-weight:600">Voir toutes les options →</a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {# ── TITRE ── #}
+        <div style="margin-bottom:16px">
+          <label class="field-label">Titre de l'annonce *</label>
+          <input type="text" name="titre" required maxlength="120"
+            placeholder="Ex : Villa F4 meublée à Ngoyo · Samsung Galaxy S24 Ultra…"
+            value="{{ form.titre or '' }}"
+            class="field-input">
+        </div>
+
+        {# ── CATEGORIE ── #}
+        <div style="margin-bottom:16px">
+          <label class="field-label">Catégorie *</label>
+          <select name="categorie_id" required id="select-categorie"
+            class="field-input" onchange="onCategorieChange(this)">
+            <option value="">Choisir…</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" data-slug="{{ cat.slug }}" {% if form.categorie_id == cat.id|string or boutique.categorie_id == cat.id %}selected{% endif %}>{{ cat.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {# ── VILLE + QUARTIER (mode complet seulement) ── #}
+        {% if mode_simple %}
+        <input type="hidden" name="ville_id" id="ville-hidden" value="{{ boutique.ville_id }}">
+        {% endif %}
+        <div class="mode-complet" {% if mode_simple %}style="display:none"{% endif %}>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div>
+              <label class="field-label">Ville *</label>
+              <select name="ville_id" id="select-ville" onchange="updateQuartiers(this.value)"
+                class="field-input" {% if mode_simple %}disabled{% endif %}>
+                <option value="">Choisir…</option>
+                {% for v in villes %}
+                  <option value="{{ v.id }}" {% if form.ville_id == v.id|string or boutique.ville_id == v.id %}selected{% endif %}>{{ v.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="field-label">Quartier <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label>
+              <select name="quartier_id" id="select-quartier" class="field-input">
+                <option value="">Sélectionnez d'abord une ville</option>
+                {% for q in quartiers %}
+                  <option value="{{ q.id }}" data-ville="{{ q.ville_id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>
+                {% endfor %}
+                <option value="autre" {% if form.quartier_libre %}selected{% endif %}>Autre (préciser)...</option>
+              </select>
+              <input type="text" name="quartier_libre" id="input-quartier-libre"
+                     class="field-input" placeholder="Précisez votre quartier..."
+                     value="{% if form.quartier_libre %}{{ form.quartier_libre }}{% endif %}"
+                     style="margin-top:8px;{% if not form.quartier_libre %}display:none;{% endif %}">
+            </div>
+          </div>
+        </div>
+
+        
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Disponibilité</label>
+          <select name="disponibilite" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white">
+            <option value="">Non précisée</option>
+            <option value="disponible_maintenant" {% if form.disponibilite == 'disponible_maintenant' %}selected{% endif %}>🟢 Disponible maintenant</option>
+            <option value="sur_reservation" {% if form.disponibilite == 'sur_reservation' %}selected{% endif %}>📅 Sur réservation</option>
+            <option value="horaires_fixes" {% if form.disponibilite == 'horaires_fixes' %}selected{% endif %}>🕐 Horaires fixes</option>
+          </select>
+        </div>
+{# ── DESCRIPTION (mode complet seulement) ── #}
+        <div class="mode-complet" {% if mode_simple %}style="display:none"{% endif %}>
+          <div style="margin-bottom:16px">
+            <label class="field-label">Description *</label>
+            <textarea name="description" rows="5" maxlength="2000"
+              placeholder="Décrivez votre produit ou service en détail : état, caractéristiques, conditions de vente, livraison possible…"
+              class="field-input" style="resize:vertical">{{ form.description or '' }}</textarea>
+          </div>
+        </div>
+
+        {# ── CHAMPS EMPLOI (mode complet seulement) ── #}
+        <div id="emploi-fields" class="mode-complet" style="display:none">
+          <div style="background:var(--primary-light);border:1px solid rgba(0,183,170,.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px">
+            <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:12px">
+              <i class="ti ti-briefcase"></i> Informations spécifiques Emploi
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label class="field-label">Type d'annonce *</label>
+                <select name="emploi_type" id="emploi_type" class="field-input">
+                  <option value="">Choisir…</option>
+                  <option value="offre" {% if form.emploi_type == 'offre' %}selected{% endif %}>📋 Offre d'emploi (je recrute)</option>
+                  <option value="recherche" {% if form.emploi_type == 'recherche' %}selected{% endif %}>👤 Recherche d'emploi (je cherche)</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label">Secteur d'activité *</label>
+                <select name="emploi_secteur" id="emploi_secteur" class="field-input">
+                  <option value="">Choisir…</option>
+                  {% for secteur in ['Commerce / Vente','BTP / Travaux','Informatique / Tech','Transport / Logistique','Hôtellerie / Restauration','Santé / Médical','Éducation / Formation','Comptabilité / Finance','Sécurité','Nettoyage / Services','Administration','Autre'] %}
+                  <option value="{{ secteur }}" {% if form.emploi_secteur == secteur %}selected{% endif %}>{{ secteur }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Salaire <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label>
+              <input type="text" name="emploi_salaire" class="field-input"
+                placeholder="Ex : 150 000 FCFA/mois · À négocier · Selon profil"
+                value="{{ form.emploi_salaire or '' }}" maxlength="100">
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--text-muted);padding:8px 10px;background:white;border-radius:var(--radius-sm)">
+              ⏱ Expire automatiquement après <strong>30 jours</strong> · Max 2 photos · Pas de liens externes ni de publicité
+            </div>
+          </div>
+        </div>
+
+        {# ── PRIX ── #}
+        <div style="margin-bottom:16px">
+          <label class="field-label">Prix (FCFA)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <input type="number" name="prix" min="0" step="500" id="prix-input"
+              placeholder="0 = à négocier" value="{{ form.prix or '' }}"
+              class="field-input"
+              oninput="updatePrixApercu()" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+            {# Mode simple : type fixe caché #}
+            {% if mode_simple %}
+            <input type="hidden" name="prix_type" id="hidden-prix-type" value="fixe">
+            <div class="mode-complet" style="display:none">
+            {% else %}
+            <div>
+            {% endif %}
+              <select name="prix_type" id="prix-type" class="field-input" onchange="updatePrixApercu()">
+                <option value="fixe">Prix fixe</option>
+                <option value="mois">Par mois (location)</option>
+                <option value="negociable">À négocier</option>
+              </select>
+            </div>
+          </div>
+          <div id="prix-apercu" style="background:rgba(0,183,170,.1);border:1px solid rgba(0,183,170,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-top:8px;font-size:13px;color:var(--primary);font-weight:600;display:none">
+            Affichage : <span id="prix-affiche"></span>
+          </div>
+        </div>
+
+        {# ── PHOTOS ── #}
+        <div style="margin-bottom:24px">
+          <label class="field-label">
+            {% if mode_simple %}
+            Photo <span style="font-weight:400;color:var(--text-muted)">(1 photo recommandée)</span>
+            {% else %}
+            Photos <span style="font-weight:400;color:var(--text-muted)">(max {{ max_photos }} · JPG, PNG, WEBP)</span>
+            {% endif %}
+          </label>
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photos-input').click()">
+            <i class="ti ti-photo-plus"></i>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Cliquez pour ajouter une photo</div>
+            <div style="font-size:12px;color:var(--text-muted)">ou glissez-déposez ici
+              {% if not mode_simple %}· Max {{ max_photos }} photos{% endif %}</div>
+          </div>
+          <input type="file" name="photos" id="photos-input" multiple accept="image/*"
+            style="display:none" onchange="previewPhotos(this)">
+          <div class="photo-previews" id="photo-previews"></div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:8px">
+            <i class="ti ti-info-circle" style="font-size:13px;color:var(--primary)"></i>
+            La 1ère photo sera la photo principale de votre annonce.
+          </div>
+        </div>
+
+        {# ── VIDÉO (mode complet, plan pro+) ── #}
+        {% if boutique.plan in ['pro', 'premium', 'business'] %}
+        <div class="mode-complet" {% if mode_simple %}style="display:none"{% endif %} style="margin-bottom:20px">
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">
+            <i class="ti ti-brand-youtube" style="color:var(--primary)"></i>
+            Lien vidéo
+            {% if boutique.plan == 'pro' %}
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">(1 vidéo max — Pro)</span>
+            {% else %}
+            <span style="font-size:11px;color:var(--text-muted);font-weight:400">(illimité — {{ boutique.plan|capitalize }})</span>
+            {% endif %}
+          </label>
+          <input type="url" name="video_url" class="field-input"
+            placeholder="https://youtube.com/watch?v=... ou TikTok, Facebook..."
+            value="{{ form.video_url or '' }}">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            <i class="ti ti-info-circle"></i> Collez un lien YouTube, TikTok ou Facebook — la vidéo s'affichera sur votre annonce.
+          </div>
+        </div>
+        {% else %}
+        <div class="mode-complet" {% if mode_simple %}style="display:none"{% endif %}>
+          <div style="margin-bottom:20px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
+            <i class="ti ti-video-off" style="color:var(--text-muted);font-size:20px"></i>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">Vidéos non disponibles en Starter</div>
+              <div style="font-size:12px;color:var(--text-muted)">Passez au plan <strong>Pro</strong> pour ajouter des vidéos à vos annonces.</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {# ── INFO CONTACT MODE SIMPLE ── #}
+        {% if mode_simple %}
+        <div id="info-contact-simple" style="background:rgba(0,183,170,.08);border:1px solid rgba(0,183,170,.2);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px;font-size:13px;color:var(--text)">
+          <i class="ti ti-device-mobile" style="color:var(--primary)"></i>
+          Votre contact visible sur l'annonce : <strong>{{ boutique.whatsapp or boutique.telephone or 'Non renseigné' }}</strong>
+          <span style="color:var(--text-muted);font-size:11px;display:block;margin-top:3px">Modifiable depuis votre profil boutique</span>
+        </div>
+        {% endif %}
+
+        {# ── BOUTON VOIR PLUS D'OPTIONS ── #}
+        {% if mode_simple %}
+        <div id="btn-switch-mode" style="text-align:center;margin-bottom:20px">
+          <button type="button" onclick="switchToFullMode()"
+            style="background:none;border:1px dashed var(--border);color:var(--text-muted);padding:10px 20px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;width:100%">
+            <i class="ti ti-settings"></i> Ajouter une description, changer de ville, options avancées…
+          </button>
+        </div>
+        {% endif %}
+
+        {# ── URGENT ── #}
+        <div style="margin-bottom:14px;padding:12px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px">
+          <input type="checkbox" name="urgent" value="1" id="chk-urgent" style="width:16px;height:16px;accent-color:#ef4444">
+          <label for="chk-urgent" style="font-size:13px;font-weight:600;color:#ef4444;cursor:pointer">
+            🔴 Marquer comme Urgent — votre annonce sera mise en avant
+          </label>
+        </div>
+
+        {# ── SUBMIT ── #}
+        <button type="submit"
+          style="width:100%;background:var(--primary);color:var(--dark);border:none;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:800;cursor:pointer"
+          onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+          <i class="ti ti-speakerphone"></i> Publier l'annonce →
+        </button>
+
+      </form>
+    </div>
+
+    <div style="text-align:center;margin-top:14px">
+      <a href="/dashboard" style="font-size:13px;color:var(--text-muted)">← Revenir à mon tableau de bord</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Switch vers le formulaire complet ──
+function switchToFullMode() {
+  document.getElementById('mode_simple_input').value = '0';
+  // Activer champs cachés
+  document.querySelectorAll('.mode-complet').forEach(el => { el.style.display = ''; });
+  // Désactiver inputs hidden de mode simple
+  const villeHidden = document.getElementById('ville-hidden');
+  if (villeHidden) villeHidden.disabled = true;
+  const prixTypeHidden = document.getElementById('hidden-prix-type');
+  if (prixTypeHidden) prixTypeHidden.disabled = true;
+  // Activer select ville
+  const villeSelect = document.getElementById('select-ville');
+  if (villeSelect) { villeSelect.disabled = false; }
+  // Masquer éléments mode simple
+  const banner = document.getElementById('banner-simple');
+  if (banner) banner.style.display = 'none';
+  const btnSwitch = document.getElementById('btn-switch-mode');
+  if (btnSwitch) btnSwitch.style.display = 'none';
+  const infoContact = document.getElementById('info-contact-simple');
+  if (infoContact) infoContact.style.display = 'none';
+  // Scroll doux vers description
+  const descField = document.querySelector('[name="description"]');
+  if (descField) descField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Changement catégorie ──
+function onCategorieChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const slug = opt ? opt.dataset.slug : '';
+  const isEmploi = slug === 'emploi';
+  const isServices = slug === 'services';
+  // Si Services ou Emploi en mode simple → passer en mode complet
+  if ((isEmploi || isServices) && document.getElementById('mode_simple_input').value === '1') {
+    switchToFullMode();
+  }
+  // Champs emploi
+  const block = document.getElementById('emploi-fields');
+  block.style.display = isEmploi ? 'block' : 'none';
+  document.getElementById('emploi_type').required    = isEmploi;
+  document.getElementById('emploi_secteur').required = isEmploi;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('select-categorie');
+  if (sel && sel.value) onCategorieChange(sel);
+  const ville = document.getElementById('select-ville');
+  if (ville && ville.value) updateQuartiers(ville.value);
+});
+
+function updateQuartiers(villeId) {
+  const sel = document.getElementById('select-quartier');
+  const opts = sel.querySelectorAll('option[data-ville]');
+  sel.querySelector('option:first-child').textContent = 'Choisir un quartier…';
+  opts.forEach(opt => {
+    opt.style.display = opt.dataset.ville === villeId ? '' : 'none';
+  });
+  sel.value = '';
+  var lq=document.getElementById('input-quartier-libre');if(lq)lq.style.display='none';
+}
+
+// ── Photos ──
+const MAX_PHOTOS = {{ max_photos }};
+let selectedFiles = [];
+
+function previewPhotos(input) {
+  const files = Array.from(input.files);
+  if (selectedFiles.length + files.length > MAX_PHOTOS) {
+    alert('Maximum ' + MAX_PHOTOS + ' photos autorisées.');
+    return;
+  }
+  files.forEach((file) => {
+    if (!file.type.startsWith('image/')) return;
+    selectedFiles.push(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const idx = selectedFiles.length - 1;
+      const div = document.createElement('div');
+      div.className = 'photo-thumb' + (idx === 0 ? ' principal' : '');
+      div.dataset.idx = idx;
+      div.innerHTML = `<img src="${e.target.result}" alt="photo"><button type="button" class="remove-btn" onclick="removePhoto(${idx})">×</button>`;
+      document.getElementById('photo-previews').appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+  rebuildFileInput();
+}
+
+function removePhoto(idx) {
+  selectedFiles.splice(idx, 1);
+  rebuildPreviews();
+  rebuildFileInput();
+}
+
+function rebuildPreviews() {
+  const container = document.getElementById('photo-previews');
+  container.innerHTML = '';
+  selectedFiles.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'photo-thumb' + (idx === 0 ? ' principal' : '');
+      div.innerHTML = `<img src="${e.target.result}" alt="photo"><button type="button" class="remove-btn" onclick="removePhoto(${idx})">×</button>`;
+      container.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function rebuildFileInput() {
+  const dt = new DataTransfer();
+  selectedFiles.forEach(f => dt.items.add(f));
+  document.getElementById('photos-input').files = dt.files;
+}
+
+// Drag & drop
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag-over');
+  const input = document.getElementById('photos-input');
+  const dt = new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+  input.files = dt.files;
+  previewPhotos(input);
+});
+
+// ── Aperçu prix ──
+function updatePrixApercu() {
+  const prixEl = document.getElementById('prix-input');
+  const typeEl = document.getElementById('prix-type');
+  const prix = parseFloat(prixEl ? prixEl.value : 0) || 0;
+  const type = typeEl ? typeEl.value : 'fixe';
+  const div  = document.getElementById('prix-apercu');
+  const span = document.getElementById('prix-affiche');
+  if (!div) return;
+  if (type === 'negociable' || prix === 0) {
+    span.textContent = 'À négocier';
+  } else {
+    const fmt = new Intl.NumberFormat('fr-FR').format(prix);
+    span.textContent = fmt + ' FCFA' + (type === 'mois' ? ' / mois' : '');
+  }
+  div.style.display = 'block';
+}
+const prixInput = document.getElementById('prix-input');
+const prixType  = document.getElementById('prix-type');
+if (prixInput) prixInput.addEventListener('input', updatePrixApercu);
+if (prixType)  prixType.addEventListener('change', updatePrixApercu);
+// Libre quartier
+
+(function(){
+  var s=document.getElementById('select-quartier');
+  var inp=document.getElementById('input-quartier-libre');
+  if(!s||!inp) return;
+  s.addEventListener('change',function(){
+    inp.style.display=this.value==='autre'?'':'none';
+    if(this.value==='autre') inp.focus();
+  });
+  if(s.value==='autre') inp.style.display='';
+})();
+</script>
+{% endblock %}
