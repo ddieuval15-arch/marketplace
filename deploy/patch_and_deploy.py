@@ -585,6 +585,25 @@ c, ch = apply_patch(
 )
 changed = changed or ch
 
+c, ch = apply_patch(
+    c,
+    """@app.route('/boutique/<slug>')
+def boutique(slug):""",
+    """@app.route('/vendeur/<int:vendeur_id>')
+def vendeur_profil(vendeur_id):
+    db = get_db()
+    b = db.execute('SELECT slug FROM boutiques WHERE vendeur_id=?', (vendeur_id,)).fetchone()
+    db.close()
+    if not b:
+        abort(404)
+    return redirect(url_for('boutique', slug=b['slug']))
+
+@app.route('/boutique/<slug>')
+def boutique(slug):""",
+    "ajoute la route /vendeur/<id> manquante (le lien Profil vendeur sur les annonces menait a une 404 partout)",
+)
+changed = changed or ch
+
 if changed:
     put_file(path, c)
     print("  -> fichier mis a jour sur le serveur")
