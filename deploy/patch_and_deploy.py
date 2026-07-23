@@ -462,6 +462,165 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# database.py
+# ─────────────────────────────────────────────────────────────
+path = "database.py"
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    """        ('km4', 'Km4', 2), ('boscongo', 'Boscongo', 2),""",
+    """        ('km4', 'Km4', 2), ('boscongo', 'Boscongo', 2),
+        ('mpaka', 'Mpaka', 2), ('wharf', 'Wharf', 2),
+        ('sangolo', 'Sangolo', 2), ('la-base', 'La Base', 2),
+        ('patra', 'Patra', 2), ('malala', 'Malala', 2),
+        ('aeroport-pnr', 'Aeroport', 2),""",
+    "ajout des quartiers manquants de Pointe-Noire (Mpaka, Wharf, Sangolo, La Base, Patra, Malala, Aeroport)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# app.py -- fix quartier sur creer_boutique()
+# ─────────────────────────────────────────────────────────────
+path = "app.py"
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    """            quartier_id_b = form.get(\'quartier_id\') or None
+            db.execute(\'\'\'INSERT INTO boutiques
+                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)\'\'\'  ,
+                (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur[\'email\'], plan,
+                 session[\'vendeur_id\'], actif_initial, logo_fname, banniere_fname))""",
+    """            quartier_libre_b = form.get(\'quartier_libre\', \'\').strip() or None
+            if form.get(\'quartier_id\') == \'autre\' and quartier_libre_b:
+                _q_slug = slugify(quartier_libre_b)
+                db.execute(\'INSERT OR IGNORE INTO quartiers (slug, nom, ville_id) VALUES (?,?,?)\',
+                           (_q_slug, quartier_libre_b, ville_id))
+                db.commit()
+                _q_row = db.execute(\'SELECT id FROM quartiers WHERE slug=?\', (_q_slug,)).fetchone()
+                quartier_id_b = _q_row[\'id\'] if _q_row else None
+            else:
+                quartier_id_b = form.get(\'quartier_id\') or None
+            db.execute(\'\'\'INSERT INTO boutiques
+                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)\'\'\'  ,
+                (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur[\'email\'], plan,
+                 session[\'vendeur_id\'], actif_initial, logo_fname, banniere_fname))""",
+    "gestion du quartier libre (Autre) avec enrichissement automatique de la table quartiers",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    """    return render_template(\'pages/creer_boutique.html\',
+        villes=villes, categories=categories, vendeur=vendeur, form=form,
+        mode_recruteur=mode_recruteur)""",
+    """    return render_template(\'pages/creer_boutique.html\',
+        villes=villes, categories=categories, vendeur=vendeur, form=form,
+        quartiers=quartiers, mode_recruteur=mode_recruteur)""",
+    "transmission de la liste des quartiers au formulaire de creation de boutique",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/creer_boutique.html
+# ─────────────────────────────────────────────────────────────
+path = "templates/pages/creer_boutique.html"
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '''            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ville *</label>
+            <select name="ville_id" required
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;background:white"
+              onfocus="this.style.borderColor=\'var(--primary)\'" onblur="this.style.borderColor=\'var(--border)\'">
+              <option value="">Choisir…</option>
+              {% for v in villes %}
+                <option value="{{ v.id }}" {% if form.ville_id == v.id|string %}selected{% endif %}>{{ v.nom }}</option>
+              {% endfor %}
+            </select>''',
+    '''            <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Ville *</label>
+            <select name="ville_id" id="select-ville-b" required onchange="updateQuartiersBoutique(this.value)"
+              style="width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;outline:none;background:white"
+              onfocus="this.style.borderColor=\'var(--primary)\'" onblur="this.style.borderColor=\'var(--border)\'">
+              <option value="">Choisir…</option>
+              {% for v in villes %}
+                <option value="{{ v.id }}" {% if form.ville_id == v.id|string %}selected{% endif %}>{{ v.nom }}</option>
+              {% endfor %}
+            </select>''',
+    "ajout de l\'id et du onchange sur le select ville (creer_boutique)",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '''<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Quartier / Zone <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><select name="quartier_id" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white"><option value="">Choisir un quartier...</option>{% for q in quartiers %}<option value="{{ q.id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>{% endfor %}</select></div>''',
+    '''<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Quartier / Zone <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><select name="quartier_id" id="select-quartier-b" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white"><option value="">Selectionnez d\'abord une ville</option>{% for q in quartiers %}<option value="{{ q.id }}" data-ville="{{ q.ville_id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>{% endfor %}<option value="autre" {% if form.quartier_libre %}selected{% endif %}>Autre (preciser)...</option></select><input type="text" name="quartier_libre" id="input-quartier-libre-b" placeholder="Precisez votre quartier..." value="{% if form.quartier_libre %}{{ form.quartier_libre }}{% endif %}" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;{% if not form.quartier_libre %}display:none;{% endif %}"></div>''',
+    "ajout du filtrage par ville et de l\'option Autre (preciser) sur le quartier boutique",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    """<script>
+const ta = document.querySelector('textarea[name=description]');
+const counter = document.getElementById('desc-count');
+ta.addEventListener('input', () => { counter.textContent = ta.value.length + ' / 500'; });
+</script>""",
+    """<script>
+const ta = document.querySelector('textarea[name=description]');
+const counter = document.getElementById('desc-count');
+ta.addEventListener('input', () => { counter.textContent = ta.value.length + ' / 500'; });
+
+function updateQuartiersBoutique(villeId) {
+  var sel = document.getElementById('select-quartier-b');
+  if (!sel) return;
+  var opts = sel.querySelectorAll('option[data-ville]');
+  opts.forEach(function(opt) { opt.style.display = (opt.dataset.ville === villeId) ? '' : 'none'; });
+  sel.value = '';
+  var lq = document.getElementById('input-quartier-libre-b');
+  if (lq) lq.style.display = 'none';
+}
+(function(){
+  var s = document.getElementById('select-quartier-b');
+  var inp = document.getElementById('input-quartier-libre-b');
+  if (!s || !inp) return;
+  s.addEventListener('change', function(){
+    inp.style.display = this.value === 'autre' ? '' : 'none';
+    if (this.value === 'autre') inp.focus();
+  });
+  var v = document.getElementById('select-ville-b');
+  if (v && v.value) updateQuartiersBoutique(v.value);
+})();
+</script>""",
+    "javascript de filtrage quartier par ville + bascule du champ Autre (creer_boutique)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
