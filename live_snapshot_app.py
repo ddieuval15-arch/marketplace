@@ -868,6 +868,15 @@ def annonce(slug):
         similaires=similaires, photos=photos, villes=villes, categories=categories,
         est_favori=est_favori)
 
+@app.route('/vendeur/<int:vendeur_id>')
+def vendeur_profil(vendeur_id):
+    db = get_db()
+    b = db.execute('SELECT slug FROM boutiques WHERE vendeur_id=?', (vendeur_id,)).fetchone()
+    db.close()
+    if not b:
+        abort(404)
+    return redirect(url_for('boutique', slug=b['slug']))
+
 @app.route('/boutique/<slug>')
 def boutique(slug):
     db = get_db()
