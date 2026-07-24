@@ -456,7 +456,7 @@ def index():
         SELECT b.*, c.nom as cat_nom FROM boutiques b
         JOIN categories c ON b.categorie_id = c.id
         WHERE b.actif = 1
-        ORDER BY CASE WHEN b.plan="premium" THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC
+        ORDER BY CASE WHEN b.plan IN ("premium","business") THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC
         LIMIT 8
     ''').fetchall()
     mes_favoris_ids = set()
@@ -1182,7 +1182,7 @@ def boutiques():
         FROM boutiques b JOIN categories c ON b.categorie_id=c.id
         LEFT JOIN annonces a ON a.boutique_id=b.id AND a.statut="active"
         WHERE b.actif=1 GROUP BY b.id
-        ORDER BY CASE WHEN b.plan="premium" THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC
+        ORDER BY CASE WHEN b.plan IN ("premium","business") THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC
     ''').fetchall()
     db.close()
     return render_template('pages/boutiques.html', boutiques=bouts, villes=villes, categories=categories)
