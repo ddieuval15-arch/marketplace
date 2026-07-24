@@ -34,6 +34,31 @@
   </form>
 </div>
 
+<div style="background:#0F172A;border:1px solid rgba(0,191,179,.3);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="font-weight:700;font-size:14px;color:#fff">Levée investisseur</div>
+    <div style="font-size:11px;color:{{ '#5EEAD4' if investisseur_cfg.actif == '1' else '#94A3B8' }}">{{ 'Bandeau actif sur le site' if investisseur_cfg.actif == '1' else 'Bandeau masqué' }}</div>
+  </div>
+  <form action="/admin/config/investisseur" method="POST" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
+    <div>
+      <label style="display:block;font-size:11px;color:#94A3B8;margin-bottom:4px">Places restantes (/10)</label>
+      <input type="number" name="places_dispo" min="0" max="10" value="{{ investisseur_cfg.places_dispo }}" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid #334155;background:#1E293B;color:#fff">
+    </div>
+    <div>
+      <label style="display:block;font-size:11px;color:#94A3B8;margin-bottom:4px">% disponible</label>
+      <input type="number" name="pct_dispo" min="0" max="49" value="{{ investisseur_cfg.pct_dispo }}" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid #334155;background:#1E293B;color:#fff">
+    </div>
+    <div>
+      <label style="display:block;font-size:11px;color:#94A3B8;margin-bottom:4px">Clôture (AAAA-MM-JJ)</label>
+      <input type="date" name="cloture" value="{{ investisseur_cfg.cloture }}" style="padding:6px 8px;border-radius:6px;border:1px solid #334155;background:#1E293B;color:#fff">
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#fff;padding-bottom:8px">
+      <input type="checkbox" name="actif" {{ 'checked' if investisseur_cfg.actif == '1' else '' }}> Afficher le bandeau
+    </label>
+    <button type="submit" style="background:#00BFB3;color:#0F172A;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer">Mettre à jour</button>
+  </form>
+</div>
+
 <!-- Stats -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px">
     <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">

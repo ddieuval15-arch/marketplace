@@ -523,12 +523,18 @@ def index():
             LIMIT 6
         ''').fetchall()
 
+    _inv_rows = db.execute("SELECT cle, valeur FROM site_config WHERE cle LIKE 'investisseur_%'").fetchall()
+    investisseur = {r['cle'].replace('investisseur_', ''): r['valeur'] for r in _inv_rows}
+    investisseur.setdefault('actif', '0')
+    investisseur.setdefault('cloture', '')
+    investisseur.setdefault('places_dispo', '0')
+    investisseur.setdefault('pct_dispo', '0')
     db.close()
     return render_template('pages/index.html',
         villes=villes, categories=categories, stats=stats,
         annonces_recentes=annonces, boutiques_vedettes=boutiques,
         mes_favoris_ids=mes_favoris_ids, bon_plan=bon_plan,
-           boutique_du_jour=boutique_du_jour)
+           boutique_du_jour=boutique_du_jour, investisseur=investisseur)
 
 
 @app.route("/admin/boutique-vedette", methods=["GET", "POST"])
@@ -2515,6 +2521,12 @@ def admin():
     ''').fetchall()
     _cfg_periode = db.execute("SELECT valeur FROM site_config WHERE cle='plan_gratuit_periode'").fetchone()
     plan_gratuit_periode = _cfg_periode[0] if _cfg_periode else 'monthly'
+    _inv_rows_adm = db.execute("SELECT cle, valeur FROM site_config WHERE cle LIKE 'investisseur_%'").fetchall()
+    investisseur_cfg = {r['cle'].replace('investisseur_', ''): r['valeur'] for r in _inv_rows_adm}
+    investisseur_cfg.setdefault('actif', '0')
+    investisseur_cfg.setdefault('cloture', '')
+    investisseur_cfg.setdefault('places_dispo', '0')
+    investisseur_cfg.setdefault('pct_dispo', '0')
     ambassadeurs = db.execute('''SELECT v.id, v.nom, v.ref_code, v.is_ambassadeur, (SELECT COUNT(*) FROM boutiques b WHERE b.vendeur_id IN (SELECT id FROM vendeurs WHERE parrain_id=v.id) AND b.plan!='gratuit') as nb_recrutes FROM vendeurs v WHERE v.is_ambassadeur=1 ORDER BY nb_recrutes DESC''').fetchall()
     offres_emploi = db.execute("""
         SELECT a.id, a.titre, a.slug, a.statut, a.created_at,
@@ -2532,7 +2544,7 @@ def admin():
     return render_template('pages/admin.html', stats=stats, vendeurs=vendeurs, plan_gratuit_periode=plan_gratuit_periode,
         boutiques=boutiques_all, annonces=annonces_all, paiements=paiements_all,
         offres_emploi=offres_emploi, villes=villes, categories=categories,
-            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs)
+            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs, investisseur_cfg=investisseur_cfg)
 
 @app.route('/admin/offre-rapide', methods=['GET','POST'])
 @admin_required
@@ -3000,6 +3012,26 @@ def admin_toggle_plan_periode():
     flash(f"Plan gratuit : mode {new_val} activé.", 'success')
     return redirect(url_for('admin'))
 
+
+@app.route('/admin/config/investisseur', methods=['POST'])
+@admin_required
+def admin_config_investisseur():
+    db = get_db()
+    places = request.form.get('places_dispo', '').strip()
+    pct = request.form.get('pct_dispo', '').strip()
+    cloture = request.form.get('cloture', '').strip()
+    actif = '1' if request.form.get('actif') == 'on' else '0'
+    if places:
+        db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES ('investisseur_places_dispo', ?)", (places,))
+    if pct:
+        db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES ('investisseur_pct_dispo', ?)", (pct,))
+    if cloture:
+        db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES ('investisseur_cloture', ?)", (cloture,))
+    db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES ('investisseur_actif', ?)", (actif,))
+    db.commit()
+    db.close()
+    flash('Configuration de la levée investisseur mise à jour.', 'success')
+    return redirect(url_for('admin'))
 
 
 @app.route('/admin/boutiques-importees')

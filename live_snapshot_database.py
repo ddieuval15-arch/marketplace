@@ -351,10 +351,28 @@ def init_db():
         "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
         "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
         "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
+        "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
+        "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
+        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
+        "CREATE TABLE IF NOT EXISTS site_config (cle TEXT PRIMARY KEY, valeur TEXT)",
     ]
     for sql in migrations:
         try:
             c.execute(sql)
+        except Exception:
+            pass
+
+    # Levee investisseur -- valeurs par defaut (modifiables depuis l'admin)
+    _inv_defaults = [
+        ('investisseur_ouverture', '2026-07-27'),
+        ('investisseur_cloture', '2026-09-25'),
+        ('investisseur_places_dispo', '10'),
+        ('investisseur_pct_dispo', '49'),
+        ('investisseur_actif', '1'),
+    ]
+    for _k, _v in _inv_defaults:
+        try:
+            c.execute("INSERT OR IGNORE INTO site_config (cle, valeur) VALUES (?, ?)", (_k, _v))
         except Exception:
             pass
 
