@@ -1315,6 +1315,118 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# database.py -- table site_config (si absente) + config par defaut levee investisseur
+# ─────────────────────────────────────────────────────────────
+print("=== database.py (config investisseur) ===")
+path = 'database.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",\n    ]\n    for sql in migrations:\n        try:\n            c.execute(sql)\n        except Exception:\n            pass\n\n    # Seed quartiers',
+    '        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",\n        "CREATE TABLE IF NOT EXISTS site_config (cle TEXT PRIMARY KEY, valeur TEXT)",\n    ]\n    for sql in migrations:\n        try:\n            c.execute(sql)\n        except Exception:\n            pass\n\n    # Levee investisseur -- valeurs par defaut (modifiables depuis l\'admin)\n    _inv_defaults = [\n        (\'investisseur_ouverture\', \'2026-07-27\'),\n        (\'investisseur_cloture\', \'2026-09-25\'),\n        (\'investisseur_places_dispo\', \'10\'),\n        (\'investisseur_pct_dispo\', \'49\'),\n        (\'investisseur_actif\', \'1\'),\n    ]\n    for _k, _v in _inv_defaults:\n        try:\n            c.execute("INSERT OR IGNORE INTO site_config (cle, valeur) VALUES (?, ?)", (_k, _v))\n        except Exception:\n            pass\n\n    # Seed quartiers',
+    "ajoute CREATE TABLE IF NOT EXISTS site_config (deja utilisee en prod mais jamais tracee en migration) + seed des valeurs par defaut de la levee investisseur (ouverture 2026-07-27, cloture 2026-09-25, 10 places, 49% dispo, bandeau actif)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# app.py -- expose la config investisseur a index() et admin(), ajoute la route de mise a jour
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (config investisseur) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "    db.close()\n    return render_template('pages/index.html',\n        villes=villes, categories=categories, stats=stats,\n        annonces_recentes=annonces, boutiques_vedettes=boutiques,\n        mes_favoris_ids=mes_favoris_ids, bon_plan=bon_plan,\n           boutique_du_jour=boutique_du_jour)",
+    '    _inv_rows = db.execute("SELECT cle, valeur FROM site_config WHERE cle LIKE \'investisseur_%\'").fetchall()\n    investisseur = {r[\'cle\'].replace(\'investisseur_\', \'\'): r[\'valeur\'] for r in _inv_rows}\n    investisseur.setdefault(\'actif\', \'0\')\n    investisseur.setdefault(\'cloture\', \'\')\n    investisseur.setdefault(\'places_dispo\', \'0\')\n    investisseur.setdefault(\'pct_dispo\', \'0\')\n    db.close()\n    return render_template(\'pages/index.html\',\n        villes=villes, categories=categories, stats=stats,\n        annonces_recentes=annonces, boutiques_vedettes=boutiques,\n        mes_favoris_ids=mes_favoris_ids, bon_plan=bon_plan,\n           boutique_du_jour=boutique_du_jour, investisseur=investisseur)',
+    "index() : recupere la config site_config investisseur_* et la passe au template sous investisseur",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '    _cfg_periode = db.execute("SELECT valeur FROM site_config WHERE cle=\'plan_gratuit_periode\'").fetchone()\n    plan_gratuit_periode = _cfg_periode[0] if _cfg_periode else \'monthly\'',
+    '    _cfg_periode = db.execute("SELECT valeur FROM site_config WHERE cle=\'plan_gratuit_periode\'").fetchone()\n    plan_gratuit_periode = _cfg_periode[0] if _cfg_periode else \'monthly\'\n    _inv_rows_adm = db.execute("SELECT cle, valeur FROM site_config WHERE cle LIKE \'investisseur_%\'").fetchall()\n    investisseur_cfg = {r[\'cle\'].replace(\'investisseur_\', \'\'): r[\'valeur\'] for r in _inv_rows_adm}\n    investisseur_cfg.setdefault(\'actif\', \'0\')\n    investisseur_cfg.setdefault(\'cloture\', \'\')\n    investisseur_cfg.setdefault(\'places_dispo\', \'0\')\n    investisseur_cfg.setdefault(\'pct_dispo\', \'0\')',
+    "admin() : recupere la config investisseur pour prefill le formulaire admin",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "    return render_template('pages/admin.html', stats=stats, vendeurs=vendeurs, plan_gratuit_periode=plan_gratuit_periode,\n        boutiques=boutiques_all, annonces=annonces_all, paiements=paiements_all,\n        offres_emploi=offres_emploi, villes=villes, categories=categories,\n            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs)",
+    "    return render_template('pages/admin.html', stats=stats, vendeurs=vendeurs, plan_gratuit_periode=plan_gratuit_periode,\n        boutiques=boutiques_all, annonces=annonces_all, paiements=paiements_all,\n        offres_emploi=offres_emploi, villes=villes, categories=categories,\n            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs, investisseur_cfg=investisseur_cfg)",
+    "admin() : passe investisseur_cfg au template admin.html",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '    flash(f"Plan gratuit : mode {new_val} activé.", \'success\')\n    return redirect(url_for(\'admin\'))\n\n\n\n@app.route(\'/admin/boutiques-importees\')',
+    '    flash(f"Plan gratuit : mode {new_val} activé.", \'success\')\n    return redirect(url_for(\'admin\'))\n\n\n@app.route(\'/admin/config/investisseur\', methods=[\'POST\'])\n@admin_required\ndef admin_config_investisseur():\n    db = get_db()\n    places = request.form.get(\'places_dispo\', \'\').strip()\n    pct = request.form.get(\'pct_dispo\', \'\').strip()\n    cloture = request.form.get(\'cloture\', \'\').strip()\n    actif = \'1\' if request.form.get(\'actif\') == \'on\' else \'0\'\n    if places:\n        db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES (\'investisseur_places_dispo\', ?)", (places,))\n    if pct:\n        db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES (\'investisseur_pct_dispo\', ?)", (pct,))\n    if cloture:\n        db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES (\'investisseur_cloture\', ?)", (cloture,))\n    db.execute("INSERT OR REPLACE INTO site_config (cle, valeur) VALUES (\'investisseur_actif\', ?)", (actif,))\n    db.commit()\n    db.close()\n    flash(\'Configuration de la levée investisseur mise à jour.\', \'success\')\n    return redirect(url_for(\'admin\'))\n\n\n@app.route(\'/admin/boutiques-importees\')',
+    "ajoute la route /admin/config/investisseur (POST) pour mettre a jour places_dispo, pct_dispo, cloture, actif",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/admin.html -- carte de controle de la levee investisseur
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/admin.html (controle levee investisseur) ===")
+path = 'templates/pages/admin.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '<div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">\n  <div>\n    <div style="font-weight:700;font-size:14px;color:var(--text)">&#9881; Quota plan Gratuit</div>\n    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">\n      Mode actuel : <strong>{{ \'Quotidien (24h)\' if plan_gratuit_periode == \'daily\' else \'Mensuel\' }}</strong>\n    </div>\n  </div>\n  <form action="/admin/config/toggle-plan-periode" method="POST">\n    <button type="submit" style="background:{{ \'#10b981\' if plan_gratuit_periode == \'daily\' else \'#6b7280\' }};color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">\n      {{ \'Daily actif - Passer en Mensuel\' if plan_gratuit_periode == \'daily\' else \'Activer le Daily (24h)\' }}\n    </button>\n  </form>\n</div>',
+    '<div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">\n  <div>\n    <div style="font-weight:700;font-size:14px;color:var(--text)">&#9881; Quota plan Gratuit</div>\n    <div style="font-size:12px;color:var(--text-muted);margin-top:2px">\n      Mode actuel : <strong>{{ \'Quotidien (24h)\' if plan_gratuit_periode == \'daily\' else \'Mensuel\' }}</strong>\n    </div>\n  </div>\n  <form action="/admin/config/toggle-plan-periode" method="POST">\n    <button type="submit" style="background:{{ \'#10b981\' if plan_gratuit_periode == \'daily\' else \'#6b7280\' }};color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">\n      {{ \'Daily actif - Passer en Mensuel\' if plan_gratuit_periode == \'daily\' else \'Activer le Daily (24h)\' }}\n    </button>\n  </form>\n</div>\n\n<div style="background:#0F172A;border:1px solid rgba(0,191,179,.3);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px">\n  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">\n    <div style="font-weight:700;font-size:14px;color:#fff">Levée investisseur</div>\n    <div style="font-size:11px;color:{{ \'#5EEAD4\' if investisseur_cfg.actif == \'1\' else \'#94A3B8\' }}">{{ \'Bandeau actif sur le site\' if investisseur_cfg.actif == \'1\' else \'Bandeau masqué\' }}</div>\n  </div>\n  <form action="/admin/config/investisseur" method="POST" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">\n    <div>\n      <label style="display:block;font-size:11px;color:#94A3B8;margin-bottom:4px">Places restantes (/10)</label>\n      <input type="number" name="places_dispo" min="0" max="10" value="{{ investisseur_cfg.places_dispo }}" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid #334155;background:#1E293B;color:#fff">\n    </div>\n    <div>\n      <label style="display:block;font-size:11px;color:#94A3B8;margin-bottom:4px">% disponible</label>\n      <input type="number" name="pct_dispo" min="0" max="49" value="{{ investisseur_cfg.pct_dispo }}" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid #334155;background:#1E293B;color:#fff">\n    </div>\n    <div>\n      <label style="display:block;font-size:11px;color:#94A3B8;margin-bottom:4px">Clôture (AAAA-MM-JJ)</label>\n      <input type="date" name="cloture" value="{{ investisseur_cfg.cloture }}" style="padding:6px 8px;border-radius:6px;border:1px solid #334155;background:#1E293B;color:#fff">\n    </div>\n    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#fff;padding-bottom:8px">\n      <input type="checkbox" name="actif" {{ \'checked\' if investisseur_cfg.actif == \'1\' else \'\' }}> Afficher le bandeau\n    </label>\n    <button type="submit" style="background:#00BFB3;color:#0F172A;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer">Mettre à jour</button>\n  </form>\n</div>',
+    "ajoute une carte admin pour piloter la levee investisseur (places restantes, % dispo, date de cloture, afficher/masquer le bandeau)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/index.html -- bandeau investisseur (compte a rebours + places restantes)
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/index.html (bandeau investisseur) ===")
+path = 'templates/pages/index.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '</section>\n\n<div class="stats-banner">',
+    '</section>\n\n{% if investisseur.actif == \'1\' %}\n<div style="max-width:1100px;margin:24px auto 0;padding:0 16px">\n  <div style="background:#0F172A;border-radius:16px;padding:24px 28px;position:relative;overflow:hidden">\n    <div style="position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(0,191,179,.15)"></div>\n    <div style="position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px">\n      <div style="flex:1;min-width:240px">\n        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,191,179,.2);border:1px solid rgba(0,191,179,.4);color:#5EEAD4;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px">\n          <span style="width:6px;height:6px;border-radius:50%;background:#22C55E;display:inline-block"></span> Levée de fonds en cours\n        </div>\n        <div style="font-size:19px;font-weight:800;color:#fff;margin-bottom:4px">helloBiz ouvre son capital aux investisseurs</div>\n        <div style="font-size:13px;color:#94A3B8">Dossier et conditions disponibles sur demande — candidature étudiée individuellement.</div>\n      </div>\n      <div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">\n        <div style="text-align:center">\n          <div id="inv-countdown-val" data-cloture="{{ investisseur.cloture }}" style="font-size:26px;font-weight:900;color:#00BFB3">--</div>\n          <div style="font-size:10.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em">jours restants</div>\n        </div>\n        <div style="text-align:center">\n          <div style="font-size:26px;font-weight:900;color:#fff">{{ investisseur.pct_dispo }}%</div>\n          <div style="font-size:10.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em">parts dispo</div>\n        </div>\n        <div style="text-align:center">\n          <div style="font-size:26px;font-weight:900;color:#fff">{{ investisseur.places_dispo }}/10</div>\n          <div style="font-size:10.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em">places restantes</div>\n        </div>\n        <a href="https://wa.me/242057731857?text={{ \'Bonjour, je suis intéressé(e) par une participation au capital helloBiz.\' | urlencode }}"\n           target="_blank" rel="noopener"\n           onclick="if(typeof gtag===\'function\'){gtag(\'event\',\'cta_investisseur_click\',{\'page\':\'accueil\'});}"\n           style="background:#00BFB3;color:#0F172A;padding:12px 22px;border-radius:10px;font-size:13.5px;font-weight:800;white-space:nowrap;text-decoration:none">\n          Devenir actionnaire\n        </a>\n      </div>\n    </div>\n  </div>\n</div>\n<script>\n(function(){\n  var el = document.getElementById(\'inv-countdown-val\');\n  if(!el) return;\n  var cloture = el.getAttribute(\'data-cloture\');\n  if(!cloture) return;\n  var end = new Date(cloture + \'T23:59:59\');\n  var now = new Date();\n  var days = Math.ceil((end - now) / 86400000);\n  el.textContent = days > 0 ? days : 0;\n})();\n</script>\n{% endif %}\n\n<div class="stats-banner">',
+    "ajoute le bandeau investisseur juste apres le hero (fenetre 60 jours a partir du 2026-07-27, cloture 2026-09-25, CTA WhatsApp pre-rempli, compte a rebours JS cote client)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
