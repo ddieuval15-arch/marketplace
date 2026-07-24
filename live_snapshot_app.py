@@ -1621,7 +1621,22 @@ def modifier_boutique():
         telephone=form.get('telephone',b['telephone'] or '')
         whatsapp=form.get('whatsapp',b['whatsapp'] or '')
         email=form.get('email',b['email'] or '')
-        horaires=form.get('horaires',b['horaires'] or '')
+        _jours_m = [('lun','Lundi'),('mar','Mardi'),('mer','Mercredi'),('jeu','Jeudi'),('ven','Vendredi'),('sam','Samedi'),('dim','Dimanche')]
+        if any((f'horaire_{_c}_ferme' in request.form or f'horaire_{_c}_debut' in request.form) for _c, _ in _jours_m):
+            _lignes_m = []
+            for _code_m, _label_m in _jours_m:
+                if request.form.get(f'horaire_{_code_m}_ferme'):
+                    _lignes_m.append(f'{_label_m} : Ferme')
+                else:
+                    _hd_m = request.form.get(f'horaire_{_code_m}_debut', '').strip()
+                    _hf_m = request.form.get(f'horaire_{_code_m}_fin', '').strip()
+                    if _hd_m and _hf_m:
+                        _lignes_m.append(f'{_label_m} : {_hd_m} - {_hf_m}')
+            horaires = chr(10).join(_lignes_m)
+        else:
+            horaires=form.get('horaires',b['horaires'] or '')
+        adresse=form.get('adresse',b['adresse'] or '')
+        fermeture_message=form.get('fermeture_message',b['fermeture_message'] or '')
         site_web=form.get('site_web',b['site_web'] or '')
         facebook=form.get('facebook',b['facebook'] or '')
         instagram=form.get('instagram',b['instagram'] or '')
@@ -1634,8 +1649,8 @@ def modifier_boutique():
         errors=[]
         if len(nom)<2: errors.append('Le nom est trop court.')
         if not errors:
-            db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=? WHERE vendeur_id=?",
-                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,session['vendeur_id']))
+            db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=?,adresse=?,fermeture_message=? WHERE vendeur_id=?",
+                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,adresse,fermeture_message,session['vendeur_id']))
             db.commit()
             db.close()
             flash('Boutique mise a jour.','success')
