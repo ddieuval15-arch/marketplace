@@ -997,6 +997,148 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# database.py -- ajoute la colonne disponibilite_type pour les boutiques de service
+# ─────────────────────────────────────────────────────────────
+path = 'database.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '"ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",\n    ]',
+    '"ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",\n        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",\n    ]',
+    'ajoute la colonne disponibilite_type a la table boutiques (horaires / disponible / reservation)',
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# app.py -- creer_boutique() capture le type de disponibilite
+# ─────────────────────────────────────────────────────────────
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "            adresse_b = form.get('adresse', '')[:300]\n            fermeture_message_b = form.get('fermeture_message', '')[:300]\n",
+    "            adresse_b = form.get('adresse', '')[:300]\n            fermeture_message_b = form.get('fermeture_message', '')[:300]\n            disponibilite_type_b = form.get('disponibilite_type', 'horaires')\n            if disponibilite_type_b not in ('horaires', 'disponible', 'reservation'):\n                disponibilite_type_b = 'horaires'\n",
+    'capture disponibilite_type a la creation de boutique (horaires par defaut)',
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "            db.execute('''INSERT INTO boutiques\n                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere,adresse,horaires,fermeture_message)\n                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,\n                (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur['email'], plan,\n                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname, adresse_b, horaires_b, fermeture_message_b))\n",
+    "            db.execute('''INSERT INTO boutiques\n                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere,adresse,horaires,fermeture_message,disponibilite_type)\n                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,\n                (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur['email'], plan,\n                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname, adresse_b, horaires_b, fermeture_message_b, disponibilite_type_b))\n",
+    "inclut disponibilite_type dans l'INSERT de creation de boutique",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# app.py -- modifier_boutique() capture le type de disponibilite
+# ─────────────────────────────────────────────────────────────
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "        adresse=form.get('adresse',b['adresse'] or '')\n        fermeture_message=form.get('fermeture_message',b['fermeture_message'] or '')\n",
+    "        adresse=form.get('adresse',b['adresse'] or '')\n        fermeture_message=form.get('fermeture_message',b['fermeture_message'] or '')\n        disponibilite_type=form.get('disponibilite_type', b['disponibilite_type'] if 'disponibilite_type' in b.keys() and b['disponibilite_type'] else 'horaires')\n        if disponibilite_type not in ('horaires','disponible','reservation'):\n            disponibilite_type='horaires'\n",
+    'capture disponibilite_type a la modification de boutique',
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '        db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=?,adresse=?,fermeture_message=? WHERE vendeur_id=?",\n                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,adresse,fermeture_message,session[\'vendeur_id\']))\n',
+    '        db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=?,adresse=?,fermeture_message=?,disponibilite_type=? WHERE vendeur_id=?",\n                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,adresse,fermeture_message,disponibilite_type,session[\'vendeur_id\']))\n',
+    "inclut disponibilite_type dans l'UPDATE de modification de boutique",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/creer_boutique.html -- ajoute le type de disponibilite (en plus des horaires, ne les remplace pas)
+# ─────────────────────────────────────────────────────────────
+path = 'templates/pages/creer_boutique.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Fermeture temporaire',
+    '<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:10px">Disponibilite <span style="font-weight:400;color:var(--text-muted)">(pour les prestations de service - optionnel)</span></label><label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px"><input type="radio" name="disponibilite_type" value="horaires" checked> Horaires fixes (voir ci-dessus)</label><label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px"><input type="radio" name="disponibilite_type" value="disponible"> Disponible maintenant</label><label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="radio" name="disponibilite_type" value="reservation"> Sur reservation / rendez-vous uniquement</label></div><div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Fermeture temporaire',
+    'ajoute le choix Disponibilite (Horaires fixes / Disponible maintenant / Sur reservation) en plus du bloc horaires, pour les boutiques de service',
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/modifier_boutique.html -- ajoute le type de disponibilite (en plus des horaires, ne les remplace pas)
+# ─────────────────────────────────────────────────────────────
+path = 'templates/pages/modifier_boutique.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '    <div style="margin-bottom:16px">\n      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Fermeture temporaire',
+    '    <div style="margin-bottom:16px">\n      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:10px">Disponibilite <span style="font-weight:400;color:var(--text-muted)">(pour les prestations de service - optionnel)</span></label>\n      <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px"><input type="radio" name="disponibilite_type" value="horaires" {{ \'checked\' if (b.disponibilite_type or \'horaires\')==\'horaires\' else \'\' }}> Horaires fixes (voir ci-dessus)</label>\n      <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px"><input type="radio" name="disponibilite_type" value="disponible" {{ \'checked\' if b.disponibilite_type==\'disponible\' else \'\' }}> Disponible maintenant</label>\n      <label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="radio" name="disponibilite_type" value="reservation" {{ \'checked\' if b.disponibilite_type==\'reservation\' else \'\' }}> Sur reservation / rendez-vous uniquement</label>\n    </div>\n    <div style="margin-bottom:16px">\n      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Fermeture temporaire',
+    'ajoute le choix Disponibilite (Horaires fixes / Disponible maintenant / Sur reservation) en plus du bloc horaires, pre-rempli depuis b.disponibilite_type',
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/boutique.html -- affiche le badge de disponibilite (Disponible maintenant / Sur reservation)
+# ─────────────────────────────────────────────────────────────
+path = 'templates/pages/boutique.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '<!-- HORAIRES -->\n  {% if boutique.horaires %}\n  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">\n    <i class="ti ti-clock" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>\n    <div>\n      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Horaires d\'ouverture</div>\n      <div style="font-size:13px;color:var(--text-muted);white-space:pre-line">{{ boutique.horaires }}</div>\n    </div>\n  </div>\n  {% endif %}\n\n  ',
+    '<!-- HORAIRES -->\n  {% if boutique.horaires %}\n  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">\n    <i class="ti ti-clock" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>\n    <div>\n      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Horaires d\'ouverture</div>\n      <div style="font-size:13px;color:var(--text-muted);white-space:pre-line">{{ boutique.horaires }}</div>\n    </div>\n  </div>\n  {% endif %}\n\n  \n  <!-- DISPONIBILITE -->\n  {% if boutique.disponibilite_type == \'disponible\' %}\n  <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">\n    <i class="ti ti-circle-check" style="font-size:20px;color:#16a34a;flex-shrink:0"></i>\n    <div style="font-size:13px;font-weight:700;color:#166534">Disponible maintenant</div>\n  </div>\n  {% elif boutique.disponibilite_type == \'reservation\' %}\n  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">\n    <i class="ti ti-calendar-event" style="font-size:20px;color:var(--primary);flex-shrink:0"></i>\n    <div style="font-size:13px;font-weight:700">Sur reservation / rendez-vous uniquement</div>\n  </div>\n  {% endif %}\n',
+    'affiche un badge Disponible maintenant / Sur reservation en plus du bloc horaires existant',
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # templates/pages/dashboard.html -- corrige le prix affiche du lien upgrade Business
 # ─────────────────────────────────────────────────────────────
 path = "templates/pages/dashboard.html"
