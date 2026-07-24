@@ -711,6 +711,49 @@ c, ch = apply_patch(
 )
 changed = changed or ch
 
+c, ch = apply_patch(
+    c,
+    """        horaires=form.get('horaires',b['horaires'] or '')
+        site_web=form.get('site_web',b['site_web'] or '')
+        facebook=form.get('facebook',b['facebook'] or '')
+        instagram=form.get('instagram',b['instagram'] or '')
+        logo=b['logo']
+        banniere=b['banniere']""",
+    """        _jours_m = [('lun','Lundi'),('mar','Mardi'),('mer','Mercredi'),('jeu','Jeudi'),('ven','Vendredi'),('sam','Samedi'),('dim','Dimanche')]
+        if any((f'horaire_{_c}_ferme' in request.form or f'horaire_{_c}_debut' in request.form) for _c, _ in _jours_m):
+            _lignes_m = []
+            for _code_m, _label_m in _jours_m:
+                if request.form.get(f'horaire_{_code_m}_ferme'):
+                    _lignes_m.append(f'{_label_m} : Ferme')
+                else:
+                    _hd_m = request.form.get(f'horaire_{_code_m}_debut', '').strip()
+                    _hf_m = request.form.get(f'horaire_{_code_m}_fin', '').strip()
+                    if _hd_m and _hf_m:
+                        _lignes_m.append(f'{_label_m} : {_hd_m} - {_hf_m}')
+            horaires = chr(10).join(_lignes_m)
+        else:
+            horaires=form.get('horaires',b['horaires'] or '')
+        adresse=form.get('adresse',b['adresse'] or '')
+        fermeture_message=form.get('fermeture_message',b['fermeture_message'] or '')
+        site_web=form.get('site_web',b['site_web'] or '')
+        facebook=form.get('facebook',b['facebook'] or '')
+        instagram=form.get('instagram',b['instagram'] or '')
+        logo=b['logo']
+        banniere=b['banniere']""",
+    "ajoute la capture adresse, horaires (jour par jour) et fermeture temporaire a la modification de boutique",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    """            db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=? WHERE vendeur_id=?",
+                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,session['vendeur_id']))""",
+    """            db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=?,adresse=?,fermeture_message=? WHERE vendeur_id=?",
+                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,adresse,fermeture_message,session['vendeur_id']))""",
+    "inclut adresse et fermeture_message dans la mise a jour de la boutique (modifier-boutique)",
+)
+changed = changed or ch
+
 if changed:
     put_file(path, c)
     print("  -> fichier mis a jour sur le serveur")
@@ -950,7 +993,7 @@ else:
 # commit/push par l'etape suivante du workflow -- permet de les lire
 # directement via git au lieu de les extraire via les annotations
 # (trop volumineux et coupees au premier retour a la ligne).
-for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html"), ("templates/pages/creer_boutique.html", "live_snapshot_creer_boutique.html"), ("templates/pages/deposer_annonce.html", "live_snapshot_deposer_annonce.html"), ("templates/pages/admin.html", "live_snapshot_admin.html"), ("templates/pages/cgu.html", "live_snapshot_cgu.html"), ("templates/pages/dashboard.html", "live_snapshot_dashboard.html"), ("templates/pages/tarifs.html", "live_snapshot_tarifs.html")]:
+for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html"), ("templates/pages/creer_boutique.html", "live_snapshot_creer_boutique.html"), ("templates/pages/deposer_annonce.html", "live_snapshot_deposer_annonce.html"), ("templates/pages/admin.html", "live_snapshot_admin.html"), ("templates/pages/cgu.html", "live_snapshot_cgu.html"), ("templates/pages/dashboard.html", "live_snapshot_dashboard.html"), ("templates/pages/tarifs.html", "live_snapshot_tarifs.html"), ("templates/pages/modifier_boutique.html", "live_snapshot_modifier_boutique.html")]:
     try:
         _live = get_file(_fname)
         with open(_out, "w", encoding="utf-8") as _f:
