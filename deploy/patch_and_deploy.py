@@ -455,6 +455,54 @@ c, ch = apply_patch(
 )
 changed = changed or ch
 
+c, ch = apply_patch(
+    c,
+    """  <!-- HORAIRES (entreprise) -->
+  {% if boutique.is_entreprise and boutique.horaires %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">
+    <i class="ti ti-clock" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Horaires d'ouverture</div>
+      <div style="font-size:13px;color:var(--text-muted);white-space:pre-line">{{ boutique.horaires }}</div>
+    </div>
+  </div>
+  {% endif %}""",
+    """  <!-- FERMETURE TEMPORAIRE -->
+  {% if boutique.fermeture_message %}
+  <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+    <i class="ti ti-alert-triangle" style="font-size:20px;color:#dc2626;flex-shrink:0"></i>
+    <div style="font-size:13px;font-weight:700;color:#991b1b">{{ boutique.fermeture_message }}</div>
+  </div>
+  {% endif %}
+
+  <!-- ADRESSE -->
+  {% if boutique.adresse %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">
+    <i class="ti ti-map-pin" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Adresse</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">{{ boutique.adresse }}</div>
+      <a href="https://www.google.com/maps/search/?api=1&query={{ boutique.adresse|urlencode }}" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;color:var(--primary)">
+        <i class="ti ti-map-2"></i> Voir sur Google Maps
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- HORAIRES -->
+  {% if boutique.horaires %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">
+    <i class="ti ti-clock" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Horaires d'ouverture</div>
+      <div style="font-size:13px;color:var(--text-muted);white-space:pre-line">{{ boutique.horaires }}</div>
+    </div>
+  </div>
+  {% endif %}""",
+    "affiche l'adresse (avec lien Google Maps), les horaires pour toutes les boutiques (plus seulement Entreprise Pro) et le bandeau de fermeture temporaire",
+)
+changed = changed or ch
+
 if changed:
     put_file(path, c)
     print("  -> fichier mis a jour sur le serveur")
@@ -477,6 +525,16 @@ c, ch = apply_patch(
         ('patra', 'Patra', 2), ('malala', 'Malala', 2),
         ('aeroport-pnr', 'Aeroport', 2),""",
     "ajout des quartiers manquants de Pointe-Noire (Mpaka, Wharf, Sangolo, La Base, Patra, Malala, Aeroport)",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "    ]\n    for sql in migrations:",
+    ("        \"ALTER TABLE boutiques ADD COLUMN adresse TEXT\",\n"
+     "        \"ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT\",\n"
+     "    ]\n    for sql in migrations:"),
+    "ajoute les colonnes adresse et fermeture_message a la table boutiques",
 )
 changed = changed or ch
 
@@ -604,6 +662,55 @@ def boutique(slug):""",
 )
 changed = changed or ch
 
+c, ch = apply_patch(
+    c,
+    """            quartier_libre_b = form.get('quartier_libre', '').strip() or None
+            if form.get('quartier_id') == 'autre' and quartier_libre_b:
+                _q_slug = slugify(quartier_libre_b)
+                db.execute('INSERT OR IGNORE INTO quartiers (slug, nom, ville_id) VALUES (?,?,?)',
+                           (_q_slug, quartier_libre_b, ville_id))
+                db.commit()
+                _q_row = db.execute('SELECT id FROM quartiers WHERE slug=?', (_q_slug,)).fetchone()
+                quartier_id_b = _q_row['id'] if _q_row else None
+            else:
+                quartier_id_b = form.get('quartier_id') or None
+            db.execute('''INSERT INTO boutiques
+                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
+                (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur['email'], plan,
+                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname))""",
+    """            quartier_libre_b = form.get('quartier_libre', '').strip() or None
+            if form.get('quartier_id') == 'autre' and quartier_libre_b:
+                _q_slug = slugify(quartier_libre_b)
+                db.execute('INSERT OR IGNORE INTO quartiers (slug, nom, ville_id) VALUES (?,?,?)',
+                           (_q_slug, quartier_libre_b, ville_id))
+                db.commit()
+                _q_row = db.execute('SELECT id FROM quartiers WHERE slug=?', (_q_slug,)).fetchone()
+                quartier_id_b = _q_row['id'] if _q_row else None
+            else:
+                quartier_id_b = form.get('quartier_id') or None
+            adresse_b = form.get('adresse', '')[:300]
+            fermeture_message_b = form.get('fermeture_message', '')[:300]
+            _jours_b = [('lun','Lundi'),('mar','Mardi'),('mer','Mercredi'),('jeu','Jeudi'),('ven','Vendredi'),('sam','Samedi'),('dim','Dimanche')]
+            _lignes_horaires_b = []
+            for _code_b, _label_b in _jours_b:
+                if request.form.get(f'horaire_{_code_b}_ferme'):
+                    _lignes_horaires_b.append(f'{_label_b} : Ferme')
+                else:
+                    _hd_b = request.form.get(f'horaire_{_code_b}_debut', '').strip()
+                    _hf_b = request.form.get(f'horaire_{_code_b}_fin', '').strip()
+                    if _hd_b and _hf_b:
+                        _lignes_horaires_b.append(f'{_label_b} : {_hd_b} - {_hf_b}')
+            horaires_b = chr(10).join(_lignes_horaires_b)
+            db.execute('''INSERT INTO boutiques
+                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere,adresse,horaires,fermeture_message)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
+                (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur['email'], plan,
+                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname, adresse_b, horaires_b, fermeture_message_b))""",
+    "ajoute la capture adresse, horaires (jour par jour) et fermeture temporaire a la creation de boutique",
+)
+changed = changed or ch
+
 if changed:
     put_file(path, c)
     print("  -> fichier mis a jour sur le serveur")
@@ -651,6 +758,18 @@ changed = changed or ch
 
 c, ch = apply_patch(
     c,
+    '''<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Quartier / Zone <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><select name="quartier_id" id="select-quartier-b" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white"><option value="">Selectionnez d'abord une ville</option>{% for q in quartiers %}<option value="{{ q.id }}" data-ville="{{ q.ville_id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>{% endfor %}<option value="autre" {% if form.quartier_libre %}selected{% endif %}>Autre (preciser)...</option></select><input type="text" name="quartier_libre" id="input-quartier-libre-b" placeholder="Precisez votre quartier..." value="{% if form.quartier_libre %}{{ form.quartier_libre }}{% endif %}" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;{% if not form.quartier_libre %}display:none;{% endif %}"></div></form>''',
+    '''<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Quartier / Zone <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><select name="quartier_id" id="select-quartier-b" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:white"><option value="">Selectionnez d'abord une ville</option>{% for q in quartiers %}<option value="{{ q.id }}" data-ville="{{ q.ville_id }}" {% if form.quartier_id == q.id|string %}selected{% endif %}>{{ q.nom }}</option>{% endfor %}<option value="autre" {% if form.quartier_libre %}selected{% endif %}>Autre (preciser)...</option></select><input type="text" name="quartier_libre" id="input-quartier-libre-b" placeholder="Precisez votre quartier..." value="{% if form.quartier_libre %}{{ form.quartier_libre }}{% endif %}" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;{% if not form.quartier_libre %}display:none;{% endif %}"></div>
+<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Adresse <span style="font-weight:400;color:var(--text-muted)">(pour les boutiques physiques - permet aux clients de vous localiser sur Google Maps)</span></label><input type="text" name="adresse" placeholder="Ex : Avenue de l Independance, face a la pharmacie X, Pointe-Noire" value="{{ form.adresse or '' }}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px"></div>
+<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:10px">Horaires d ouverture <span style="font-weight:400;color:var(--text-muted)">(optionnel)</span></label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Lundi</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_lun_ferme" id="horaire_lun_ferme" onchange="toggleHoraireJour('lun')"> Ferme</label><input type="time" name="horaire_lun_debut" id="horaire_lun_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_lun_fin" id="horaire_lun_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Mardi</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_mar_ferme" id="horaire_mar_ferme" onchange="toggleHoraireJour('mar')"> Ferme</label><input type="time" name="horaire_mar_debut" id="horaire_mar_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_mar_fin" id="horaire_mar_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Mercredi</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_mer_ferme" id="horaire_mer_ferme" onchange="toggleHoraireJour('mer')"> Ferme</label><input type="time" name="horaire_mer_debut" id="horaire_mer_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_mer_fin" id="horaire_mer_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Jeudi</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_jeu_ferme" id="horaire_jeu_ferme" onchange="toggleHoraireJour('jeu')"> Ferme</label><input type="time" name="horaire_jeu_debut" id="horaire_jeu_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_jeu_fin" id="horaire_jeu_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Vendredi</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_ven_ferme" id="horaire_ven_ferme" onchange="toggleHoraireJour('ven')"> Ferme</label><input type="time" name="horaire_ven_debut" id="horaire_ven_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_ven_fin" id="horaire_ven_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Samedi</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_sam_ferme" id="horaire_sam_ferme" onchange="toggleHoraireJour('sam')"> Ferme</label><input type="time" name="horaire_sam_debut" id="horaire_sam_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_sam_fin" id="horaire_sam_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><span style="width:78px;font-size:13px;font-weight:600">Dimanche</span><label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted)"><input type="checkbox" name="horaire_dim_ferme" id="horaire_dim_ferme" onchange="toggleHoraireJour('dim')"> Ferme</label><input type="time" name="horaire_dim_debut" id="horaire_dim_debut" value="08:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"><span style="font-size:12px;color:var(--text-muted)">a</span><input type="time" name="horaire_dim_fin" id="horaire_dim_fin" value="18:00" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px"></div></div>
+<div style="margin-bottom:16px"><label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Fermeture temporaire <span style="font-weight:400;color:var(--text-muted)">(optionnel - ex: travaux, conges)</span></label><input type="text" name="fermeture_message" placeholder="Ex : Ferme pour travaux jusqu au 15/08, ou Ferme pour conges annuels" value="{{ form.fermeture_message or '' }}" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px"></div>
+</form>''',
+    "ajoute les champs adresse, horaires jour par jour et fermeture temporaire au formulaire de creation de boutique",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
     """<script>
 const ta = document.querySelector('textarea[name=description]');
 const counter = document.getElementById('desc-count');
@@ -683,6 +802,29 @@ function updateQuartiersBoutique(villeId) {
 })();
 </script>""",
     "javascript de filtrage quartier par ville + bascule du champ Autre (creer_boutique)",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    """  var v = document.getElementById('select-ville-b');
+  if (v && v.value) updateQuartiersBoutique(v.value);
+})();
+</script>""",
+    """  var v = document.getElementById('select-ville-b');
+  if (v && v.value) updateQuartiersBoutique(v.value);
+})();
+
+function toggleHoraireJour(code) {
+  var ferme = document.getElementById('horaire_' + code + '_ferme');
+  var debut = document.getElementById('horaire_' + code + '_debut');
+  var fin = document.getElementById('horaire_' + code + '_fin');
+  if (!ferme || !debut || !fin) return;
+  debut.disabled = ferme.checked;
+  fin.disabled = ferme.checked;
+}
+</script>""",
+    "js pour desactiver les champs heure quand le jour est marque Ferme (creer_boutique)",
 )
 changed = changed or ch
 
