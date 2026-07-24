@@ -1139,6 +1139,35 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# app.py -- corrige le tri des boutiques pour prioriser Business (plan le plus cher, 25000 FCFA) avant Premium/Pro/Starter/Gratuit
+# ─────────────────────────────────────────────────────────────
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '    boutiques = db.execute(\'\'\'\n        SELECT b.*, c.nom as cat_nom FROM boutiques b\n        JOIN categories c ON b.categorie_id = c.id\n        WHERE b.actif = 1\n        ORDER BY CASE WHEN b.plan="premium" THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC\n        LIMIT 8\n    \'\'\').fetchall()',
+    '    boutiques = db.execute(\'\'\'\n        SELECT b.*, c.nom as cat_nom FROM boutiques b\n        JOIN categories c ON b.categorie_id = c.id\n        WHERE b.actif = 1\n        ORDER BY CASE WHEN b.plan IN ("premium","business") THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC\n        LIMIT 8\n    \'\'\').fetchall()',
+    "priorise les boutiques Business dans le tri de la section boutiques en avant (page d'accueil) -- Business etait auparavant traite comme Gratuit/Starter",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '        SELECT b.*, c.nom as cat_nom, COUNT(a.id) as nb_annonces\n        FROM boutiques b JOIN categories c ON b.categorie_id=c.id\n        LEFT JOIN annonces a ON a.boutique_id=b.id AND a.statut="active"\n        WHERE b.actif=1 GROUP BY b.id\n        ORDER BY CASE WHEN b.plan="premium" THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC\n    \'\'\').fetchall()',
+    '        SELECT b.*, c.nom as cat_nom, COUNT(a.id) as nb_annonces\n        FROM boutiques b JOIN categories c ON b.categorie_id=c.id\n        LEFT JOIN annonces a ON a.boutique_id=b.id AND a.statut="active"\n        WHERE b.actif=1 GROUP BY b.id\n        ORDER BY CASE WHEN b.plan IN ("premium","business") THEN 0 WHEN b.plan="pro" THEN 1 ELSE 2 END, b.badge_verifie DESC\n    \'\'\').fetchall()',
+    "priorise les boutiques Business dans le tri de la page Toutes les boutiques -- meme bug que sur la page d'accueil",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # templates/pages/dashboard.html -- corrige le prix affiche du lien upgrade Business
 # ─────────────────────────────────────────────────────────────
 path = "templates/pages/dashboard.html"
@@ -1165,7 +1194,7 @@ else:
 # commit/push par l'etape suivante du workflow -- permet de les lire
 # directement via git au lieu de les extraire via les annotations
 # (trop volumineux et coupees au premier retour a la ligne).
-for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html"), ("templates/pages/creer_boutique.html", "live_snapshot_creer_boutique.html"), ("templates/pages/deposer_annonce.html", "live_snapshot_deposer_annonce.html"), ("templates/pages/admin.html", "live_snapshot_admin.html"), ("templates/pages/cgu.html", "live_snapshot_cgu.html"), ("templates/pages/dashboard.html", "live_snapshot_dashboard.html"), ("templates/pages/tarifs.html", "live_snapshot_tarifs.html"), ("templates/pages/modifier_boutique.html", "live_snapshot_modifier_boutique.html")]:
+for _fname, _out in [("app.py", "live_snapshot_app.py"), ("database.py", "live_snapshot_database.py"), ("templates/pages/annonce.html", "live_snapshot_annonce.html"), ("templates/pages/boutique.html", "live_snapshot_boutique.html"), ("templates/pages/creer_boutique.html", "live_snapshot_creer_boutique.html"), ("templates/pages/deposer_annonce.html", "live_snapshot_deposer_annonce.html"), ("templates/pages/admin.html", "live_snapshot_admin.html"), ("templates/pages/cgu.html", "live_snapshot_cgu.html"), ("templates/pages/dashboard.html", "live_snapshot_dashboard.html"), ("templates/pages/tarifs.html", "live_snapshot_tarifs.html"), ("templates/pages/modifier_boutique.html", "live_snapshot_modifier_boutique.html"), ("templates/pages/boutiques.html", "live_snapshot_boutiques_liste.html"), ("static/css/style.css", "live_snapshot_style.css"), ("templates/base.html", "live_snapshot_base.html")]:
     try:
         _live = get_file(_fname)
         with open(_out, "w", encoding="utf-8") as _f:
