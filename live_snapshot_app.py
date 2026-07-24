@@ -1178,7 +1178,7 @@ def boutiques():
     db = get_db()
     villes, categories, quartiers = get_base_data()
     bouts = db.execute('''
-        SELECT b.*, c.nom as cat_nom, COUNT(a.id) as nb_annonces
+        SELECT b.*, c.nom as cat_nom, c.icon as cat_icon, COUNT(a.id) as nb_annonces
         FROM boutiques b JOIN categories c ON b.categorie_id=c.id
         LEFT JOIN annonces a ON a.boutique_id=b.id AND a.statut="active"
         WHERE b.actif=1 GROUP BY b.id

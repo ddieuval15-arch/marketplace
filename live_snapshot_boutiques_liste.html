@@ -17,22 +17,22 @@
 
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
     {% for b in boutiques %}
-      <a href="/boutique/{{ b.slug }}" class="boutique-card" style="padding:18px">
+      <a href="/boutique/{{ b.slug }}" class="boutique-card{{ ' tier-business' if b.plan == 'business' else '' }}" style="padding:18px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div class="boutique-avatar">{{ b.nom[:2].upper() }}</div>
+          <div class="boutique-logo" style="width:46px;height:46px;font-size:15px;margin:0">{% if b.logo %}<img src="{{ url_for('static', filename='uploads/' + b.logo) }}" alt="">{% else %}{{ b.nom[:2].upper() }}{% endif %}</div>
           <div>
             <div class="boutique-name">{{ b.nom }}</div>
-            <div class="boutique-cat">{{ b.cat_nom }}</div>
+            <div class="boutique-cat"><i class="ti ti-{{ b.cat_icon or 'tag' }}" style="font-size:11px;margin-right:2px"></i>{{ b.cat_nom }}</div>
           </div>
         </div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;line-height:1.5">{{ b.description[:80] }}…</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">
           {% if b.badge_verifie %}
-            <span class="badge-verifie"><i class="ti ti-shield-check" style="font-size:10px"></i> Vérifié</span>
+            <span class="badge-verifie">{% if b.plan == 'business' %}<i class="ti ti-crown" style="font-size:10px"></i>{% else %}<i class="ti ti-shield-check" style="font-size:10px"></i>{% endif %} Vérifié</span>
           {% endif %}
-          <span class="badge-plan {{ b.plan }}">{{ b.plan|capitalize }}</span>
+          <span class="plan-badge {{ b.plan }}">{{ b.plan|capitalize }}</span>
         </div>
-        <div style="font-size:11px;color:var(--text-light)"><i class="ti ti-speakerphone" style="font-size:12px;color:var(--primary)"></i> {{ b.nb_annonces }} annonce{{ 's' if b.nb_annonces > 1 else '' }}</div>
+        <div style="font-size:11px;color:var(--text-light)"><i class="ti ti-speakerphone" style="font-size:12px;color:var(--primary)"></i> {% if b.nb_annonces > 0 %}{{ b.nb_annonces }} annonce{{ 's' if b.nb_annonces > 1 else '' }}{% else %}Nouvelle boutique{% endif %}</div>
       </a>
     {% endfor %}
   </div>
