@@ -333,6 +333,8 @@ def init_db():
         "ALTER TABLE annonces ADD COLUMN immo_transaction TEXT",
         "CREATE TABLE IF NOT EXISTS reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, vendeur_id INTEGER NOT NULL, token TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0, created_at TEXT DEFAULT (datetime(\'now\')), FOREIGN KEY (vendeur_id) REFERENCES vendeurs(id))",
 
+        "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
+        "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
     ]
     for sql in migrations:
         try:

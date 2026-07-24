@@ -1565,11 +1565,24 @@ def creer_boutique():
                 quartier_id_b = _q_row['id'] if _q_row else None
             else:
                 quartier_id_b = form.get('quartier_id') or None
+            adresse_b = form.get('adresse', '')[:300]
+            fermeture_message_b = form.get('fermeture_message', '')[:300]
+            _jours_b = [('lun','Lundi'),('mar','Mardi'),('mer','Mercredi'),('jeu','Jeudi'),('ven','Vendredi'),('sam','Samedi'),('dim','Dimanche')]
+            _lignes_horaires_b = []
+            for _code_b, _label_b in _jours_b:
+                if request.form.get(f'horaire_{_code_b}_ferme'):
+                    _lignes_horaires_b.append(f'{_label_b} : Ferme')
+                else:
+                    _hd_b = request.form.get(f'horaire_{_code_b}_debut', '').strip()
+                    _hf_b = request.form.get(f'horaire_{_code_b}_fin', '').strip()
+                    if _hd_b and _hf_b:
+                        _lignes_horaires_b.append(f'{_label_b} : {_hd_b} - {_hf_b}')
+            horaires_b = chr(10).join(_lignes_horaires_b)
             db.execute('''INSERT INTO boutiques
-                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
+                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere,adresse,horaires,fermeture_message)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
                 (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur['email'], plan,
-                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname))
+                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname, adresse_b, horaires_b, fermeture_message_b))
             db.commit()
             b = db.execute('SELECT * FROM boutiques WHERE slug=?', (slug,)).fetchone()
             db.close()

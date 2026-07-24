@@ -75,8 +75,30 @@
     </div>
   </div>
 
-  <!-- HORAIRES (entreprise) -->
-  {% if boutique.is_entreprise and boutique.horaires %}
+  <!-- FERMETURE TEMPORAIRE -->
+  {% if boutique.fermeture_message %}
+  <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+    <i class="ti ti-alert-triangle" style="font-size:20px;color:#dc2626;flex-shrink:0"></i>
+    <div style="font-size:13px;font-weight:700;color:#991b1b">{{ boutique.fermeture_message }}</div>
+  </div>
+  {% endif %}
+
+  <!-- ADRESSE -->
+  {% if boutique.adresse %}
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">
+    <i class="ti ti-map-pin" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Adresse</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">{{ boutique.adresse }}</div>
+      <a href="https://www.google.com/maps/search/?api=1&query={{ boutique.adresse|urlencode }}" target="_blank" rel="noopener" style="font-size:12px;font-weight:700;color:var(--primary)">
+        <i class="ti ti-map-2"></i> Voir sur Google Maps
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- HORAIRES -->
+  {% if boutique.horaires %}
   <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px">
     <i class="ti ti-clock" style="font-size:20px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
     <div>
