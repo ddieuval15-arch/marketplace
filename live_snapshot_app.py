@@ -1333,6 +1333,20 @@ def cgu():
     villes, categories, quartiers = get_base_data()
     return render_template('pages/cgu.html', villes=villes, categories=categories)
 
+
+@app.route('/investisseurs')
+def investisseurs():
+    villes, categories, quartiers = get_base_data()
+    db = get_db()
+    _inv_rows = db.execute("SELECT cle, valeur FROM site_config WHERE cle LIKE 'investisseur_%'").fetchall()
+    investisseur = {r['cle'].replace('investisseur_', ''): r['valeur'] for r in _inv_rows}
+    investisseur.setdefault('actif', '0')
+    investisseur.setdefault('cloture', '')
+    investisseur.setdefault('places_dispo', '0')
+    investisseur.setdefault('pct_dispo', '0')
+    db.close()
+    return render_template('pages/investisseurs.html', villes=villes, categories=categories, investisseur=investisseur)
+
 # ════════════════════════════════════════════════════════════════════
 # AUTH
 # ════════════════════════════════════════════════════════════════════

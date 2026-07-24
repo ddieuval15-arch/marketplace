@@ -355,6 +355,9 @@ def init_db():
         "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
         "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
         "CREATE TABLE IF NOT EXISTS site_config (cle TEXT PRIMARY KEY, valeur TEXT)",
+        "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
+        "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
+        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
     ]
     for sql in migrations:
         try:
