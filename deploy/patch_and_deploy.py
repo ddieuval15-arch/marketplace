@@ -1168,6 +1168,69 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# app.py -- boutiques() selectionne aussi l'icone de categorie
+# ─────────────────────────────────────────────────────────────
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    'SELECT b.*, c.nom as cat_nom, COUNT(a.id) as nb_annonces',
+    'SELECT b.*, c.nom as cat_nom, c.icon as cat_icon, COUNT(a.id) as nb_annonces',
+    'ajoute c.icon (cat_icon) a la requete de la page Toutes les boutiques, pour afficher une icone par categorie',
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/base.html -- ajoute le CSS manquant pour le badge Verifie et la bordure Business
+# ─────────────────────────────────────────────────────────────
+path = 'templates/base.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '    .plan-badge.business { background: linear-gradient(135deg,#0a0a0a,#1a1a1a); color: #F5C518; border: 1px solid #F5C518; letter-spacing: 0.5px; }',
+    '    .plan-badge.business { background: linear-gradient(135deg,#0a0a0a,#1a1a1a); color: #F5C518; border: 1px solid #F5C518; letter-spacing: 0.5px; }\n    .badge-verifie { display: inline-flex; align-items: center; gap: 3px; background: var(--primary-light); color: var(--primary); font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }\n    .boutique-card.tier-business { border: 1.5px solid #F5C518; }',
+    'ajoute le style manquant .badge-verifie (jamais defini) et une bordure doree pour les cartes boutiques plan Business, coherente avec .plan-badge.business deja existant',
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/boutiques.html -- redesign de la carte boutique (logo, icone categorie, hierarchie des plans, 0 annonce)
+# ─────────────────────────────────────────────────────────────
+path = 'templates/pages/boutiques.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '      <a href="/boutique/{{ b.slug }}" class="boutique-card" style="padding:18px">\n        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">\n          <div class="boutique-avatar">{{ b.nom[:2].upper() }}</div>\n          <div>\n            <div class="boutique-name">{{ b.nom }}</div>\n            <div class="boutique-cat">{{ b.cat_nom }}</div>\n          </div>\n        </div>\n        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;line-height:1.5">{{ b.description[:80] }}…</div>\n        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">\n          {% if b.badge_verifie %}\n            <span class="badge-verifie"><i class="ti ti-shield-check" style="font-size:10px"></i> Vérifié</span>\n          {% endif %}\n          <span class="badge-plan {{ b.plan }}">{{ b.plan|capitalize }}</span>\n        </div>\n        <div style="font-size:11px;color:var(--text-light)"><i class="ti ti-speakerphone" style="font-size:12px;color:var(--primary)"></i> {{ b.nb_annonces }} annonce{{ \'s\' if b.nb_annonces > 1 else \'\' }}</div>\n      </a>',
+    '      <a href="/boutique/{{ b.slug }}" class="boutique-card{{ \' tier-business\' if b.plan == \'business\' else \'\' }}" style="padding:18px">\n        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">\n          <div class="boutique-logo" style="width:46px;height:46px;font-size:15px;margin:0">{% if b.logo %}<img src="{{ url_for(\'static\', filename=\'uploads/\' + b.logo) }}" alt="">{% else %}{{ b.nom[:2].upper() }}{% endif %}</div>\n          <div>\n            <div class="boutique-name">{{ b.nom }}</div>\n            <div class="boutique-cat"><i class="ti ti-{{ b.cat_icon or \'tag\' }}" style="font-size:11px;margin-right:2px"></i>{{ b.cat_nom }}</div>\n          </div>\n        </div>\n        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;line-height:1.5">{{ b.description[:80] }}…</div>\n        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">\n          {% if b.badge_verifie %}\n            <span class="badge-verifie">{% if b.plan == \'business\' %}<i class="ti ti-crown" style="font-size:10px"></i>{% else %}<i class="ti ti-shield-check" style="font-size:10px"></i>{% endif %} Vérifié</span>\n          {% endif %}\n          <span class="plan-badge {{ b.plan }}">{{ b.plan|capitalize }}</span>\n        </div>\n        <div style="font-size:11px;color:var(--text-light)"><i class="ti ti-speakerphone" style="font-size:12px;color:var(--primary)"></i> {% if b.nb_annonces > 0 %}{{ b.nb_annonces }} annonce{{ \'s\' if b.nb_annonces > 1 else \'\' }}{% else %}Nouvelle boutique{% endif %}</div>\n      </a>',
+    "corrige les classes CSS de la carte boutique (boutique-avatar -> boutique-logo, badge-plan -> plan-badge, qui existaient deja stylees dans base.html mais n'etaient pas utilisees), affiche le logo de la boutique si present, ajoute l'icone de categorie, couronne pour Verifie Business, et 'Nouvelle boutique' au lieu de '0 annonce'",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # templates/pages/dashboard.html -- corrige le prix affiche du lien upgrade Business
 # ─────────────────────────────────────────────────────────────
 path = "templates/pages/dashboard.html"
