@@ -817,7 +817,7 @@ def recherche():
     offset = (page - 1) * per_page
     annonces = db.execute(f'''
         SELECT a.*, c.icon as cat_icon, c.slug as cat_slug, v.nom as ville_nom,
-               b.plan as boutique_plan, qr.nom as quartier_nom,
+               b.plan as boutique_plan, b.logo as boutique_logo, qr.nom as quartier_nom,
                (SELECT url FROM photos WHERE annonce_id=a.id AND principale=1 LIMIT 1) as photo_url,
                CASE WHEN datetime(a.created_at) >= datetime('now', '-48 hours') THEN 1 ELSE 0 END as is_new
         {base} ORDER BY {order} LIMIT ? OFFSET ?

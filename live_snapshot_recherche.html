@@ -152,14 +152,17 @@
 
           {% for a in annonces %}
             <a href="/annonce/{{ a.slug }}" class="ad-card">
-              <div class="ad-img">
+              <div class="ad-img"{% if not a.photo_url and a.boutique_logo %} style="background:var(--primary-light)"{% endif %}>
                 {% if a.photo_url %}
                   <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+                {% elif a.boutique_logo %}
+                  <img src="/static/uploads/{{ a.boutique_logo }}" alt="{{ a.titre }}" style="width:64px;height:64px;object-fit:cover;border-radius:50%;border:1px solid var(--border)">
                 {% else %}
                   <i class="ti ti-{{ a.cat_icon }}"></i>
                 {% endif %}
                 <div class="ad-badges">
-                  {% if a.boutique_plan == 'premium' %}<span class="ad-badge premium">Premium</span>
+                  {% if a.boutique_plan == 'business' %}<span class="ad-badge business">Business</span>
+                  {% elif a.boutique_plan == 'premium' %}<span class="ad-badge premium">Premium</span>
                   {% elif a.boutique_plan == 'pro' %}<span class="ad-badge pro">Pro</span>{% endif %}
                   {% if a.urgent %}<span class="ad-badge urgent">🔴 Urgent</span>{% endif %}
                   {% if a.is_new %}<span class="ad-badge nouveau">Nouveau</span>{% endif %}
