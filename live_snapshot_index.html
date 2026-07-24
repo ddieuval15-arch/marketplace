@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}helloBiz — Marketplace Congo{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-tag">Brazzaville · Pointe-Noire · et partout au Congo</div>
+  <h1>Achetez, vendez et trouvez des services<br><span>pres de chez vous</span></h1>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <strong>{{ stats.total_boutiques }}</strong>
+      <span>boutiques actives</span>
+    </div>
+    <div class="hero-stat-sep">·</div>
+    <div class="hero-stat">
+      <strong>{{ stats.total_annonces }}</strong>
+      <span>annonces publiées</span>
+    </div>
+  </div>
+  <p class="hero-sub">Particuliers et professionnels · 100% gratuit pour les visiteurs</p>
+  <form action="/recherche" method="GET" class="search-wrap">
+    <input type="text" name="q" placeholder="Que cherchez-vous ?" value="{{ request.args.get('q', '') }}">
+    <select name="ville">
+      <option value="">Toutes les villes</option>
+      {% for v in villes %}
+        <option value="{{ v.slug }}">{{ v.nom }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Rechercher</button>
+  </form>
+  <div class="city-pills">
+    <a href="/recherche" class="city-pill active">Partout au Congo</a>
+    {% for v in villes %}
+      <a href="/recherche?ville={{ v.slug }}" class="city-pill">{{ v.nom }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="stats-banner">
+  <div class="stat-item"><div class="stat-n">{{ stats.total_annonces }}</div><div class="stat-l">annonces actives</div></div>
+  <div class="stat-item"><div class="stat-n">{{ stats.total_boutiques }}</div><div class="stat-l">boutiques ouvertes</div></div>
+  <div class="stat-item"><div class="stat-n">{{ stats.total_villes }}</div><div class="stat-l">villes couvertes</div></div>
+  <div class="stat-item"><div class="stat-n">Gratuit</div><div class="stat-l">pour les visiteurs</div></div>
+</div>
+
+{% if pub_top %}
+<div class="pub-banniere" style="text-align:center;padding:10px 0;background:#f9f9f9;border-top:1px solid #eee;border-bottom:1px solid #eee">
+  <a href="{{ url_for('pub_clic', pub_id=pub_top.id) }}" target="_blank" rel="noopener"><img src="{{ pub_top.image_url }}" alt="Pub" style="max-height:90px;max-width:100%"></a>
+  <div style="font-size:9px;color:#bbb">Publicite</div>
+</div>
+{% endif %}
+
+<div class="container" style="padding-top:24px">
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)">
+    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:220px">
+      <div style="width:38px;height:38px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-bell-ringing" style="color:var(--primary);font-size:18px"></i>
+      </div>
+      <div>
+        <div style="font-size:13.5px;font-weight:700;color:var(--text)">Ne manquez plus aucune annonce</div>
+        <div style="font-size:12px;color:var(--text-muted)">Créez une alerte gratuite, on vous notifie par email des nouvelles offres.</div>
+      </div>
+    </div>
+    <a href="{{ url_for('alertes') }}"
+       onclick="if(typeof gtag==='function'){gtag('event','cta_alerte_click',{'page':'accueil'});}"
+       style="display:flex;align-items:center;gap:6px;background:var(--primary);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap;flex-shrink:0;align-self:center">
+      <i class="ti ti-bell-plus"></i> Créer une alerte
+    </a>
+    <a href="https://wa.me/242057731857?text={{ 'Bonjour, je viens de hellobizcongo.com et je souhaite en savoir plus.' | urlencode }}"
+       target="_blank" rel="noopener"
+       onclick="if(typeof gtag==='function'){gtag('event','cta_whatsapp_click',{'page':'accueil'});}"
+       style="display:flex;align-items:center;gap:6px;background:#25D366;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap;flex-shrink:0;align-self:center">
+      <i class="ti ti-brand-whatsapp"></i> WhatsApp
+    </a>
+  </div>
+</div>
+
+<div class="container" style="padding-top:24px">
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Categories</h2>
+      <a href="/categories" class="section-link">Voir toutes →</a>
+    </div>
+    <div class="cats-grid">
+      {% for cat in categories %}
+        <a href="/recherche?categorie={{ cat.slug }}" class="cat-card">
+          <div class="cat-icon"><i class="ti ti-{{ cat.icon }}"></i></div>
+          <div class="cat-label">{{ cat.nom }}</div>
+          <div class="cat-count">{{ cat.nb_annonces }} annonces</div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- BON PLAN PREMIUM avec timer -->
+  {% if bon_plan %}
+  <section class="section">
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#0d2137 100%);border-radius:var(--radius);overflow:hidden;border:2px solid var(--primary);position:relative">
+      <!-- Badge Premium -->
+      <div style="position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px">
+        ⭐ Premium
+      </div>
+      <div style="display:flex;align-items:stretch;flex-wrap:wrap">
+        {% if bon_plan.photo_url %}
+        <div style="width:220px;flex-shrink:0;min-height:160px">
+          <img src="/static/uploads/{{ bon_plan.photo_url }}" alt="{{ bon_plan.titre }}" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        {% endif %}
+        <div style="flex:1;padding:20px 24px;display:flex;flex-direction:column;justify-content:center;gap:10px;min-width:200px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--primary)">🔥 Bon plan du jour</span>
+          </div>
+          <div style="font-size:20px;font-weight:800;color:white;line-height:1.3">{{ bon_plan.titre }}</div>
+          <div style="font-size:12px;color:#94a3b8">{{ bon_plan.cat_nom }} · {{ bon_plan.ville_nom }}</div>
+          <div style="font-size:24px;font-weight:900;color:var(--primary)">
+            {% if bon_plan.prix and bon_plan.prix > 0 %}
+              {{ "{:,.0f}".format(bon_plan.prix).replace(',', ' ') }} FCFA{% if bon_plan.prix_type == 'mois' %}<span style="font-size:14px;color:#94a3b8">/mois</span>{% endif %}
+            {% else %}
+              <span style="font-size:16px;color:#94a3b8">Prix a negocier</span>
+            {% endif %}
+          </div>
+          <!-- Timer countdown -->
+          {% if bon_plan.bon_plan_expire %}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#f59e0b;font-weight:600">⏱ Expire dans :</span>
+            <div id="bp-timer" data-expire="{{ bon_plan.bon_plan_expire }}"
+              style="display:flex;gap:6px;align-items:center">
+              <span class="bp-unit" id="bp-h" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:32px;text-align:center">--</span>
+              <span style="color:#f59e0b;font-weight:700">:</span>
+              <span class="bp-unit" id="bp-m" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:32px;text-align:center">--</span>
+              <span style="color:#f59e0b;font-weight:700">:</span>
+              <span class="bp-unit" id="bp-s" style="background:rgba(245,158,11,.15);color:#f59e0b;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;min-width:32px;text-align:center">--</span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px;gap:10px;flex-shrink:0">
+          <a href="/annonce/{{ bon_plan.slug }}"
+            style="padding:12px 24px;background:var(--primary);color:white;border-radius:var(--radius-sm);font-size:14px;font-weight:700;white-space:nowrap;display:block;text-align:center;transition:background .15s"
+            onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+            Voir l'annonce →
+          </a>
+          <div style="font-size:10px;color:#64748b;text-align:center">Offre limitee · 24h seulement</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+  (function() {
+    var timerEl = document.getElementById('bp-timer');
+    if (!timerEl) return;
+    var expire = new Date(timerEl.getAttribute('data-expire').replace(' ', 'T'));
+    function pad(n) { return String(n).padStart(2,'0'); }
+    function tick() {
+      var now = new Date();
+      var diff = Math.max(0, Math.floor((expire - now) / 1000));
+      if (diff <= 0) {
+        document.getElementById('bp-h').textContent = '00';
+        document.getElementById('bp-m').textContent = '00';
+        document.getElementById('bp-s').textContent = '00';
+        clearInterval(iv);
+        return;
+      }
+      var h = Math.floor(diff / 3600);
+      var m = Math.floor((diff % 3600) / 60);
+      var s = diff % 60;
+      document.getElementById('bp-h').textContent = pad(h);
+      document.getElementById('bp-m').textContent = pad(m);
+      document.getElementById('bp-s').textContent = pad(s);
+    }
+    tick();
+    var iv = setInterval(tick, 1000);
+  })();
+  </script>
+  {% endif %}
+
+  <!-- ANNONCES RECENTES -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Annonces recentes</h2>
+      <a href="/annonces" class="section-link">Voir toutes →</a>
+    </div>
+    <div class="ads-grid">
+      {% for a in annonces_recentes %}
+        <div style="position:relative">
+          <a href="/annonce/{{ a.slug }}" class="ad-card">
+            <div class="ad-img">
+                <button class="fav-btn" data-slug="{{ a.slug }}" onclick="var b=this;toggleFavori(b.dataset.slug,b.dataset.titre,b.dataset.prix,b.dataset.ville,event)" data-titre="{{ a.titre|e }}" data-prix="{{ a.prix or 0 }}" data-ville="{{ a.ville_nom or '' }}">&#9825;</button>
+              {% if a.photo_url %}
+                <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+              {% else %}
+                <img src="/static/images/categories/{{ a.cat_slug }}.jpg" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">
+              {% endif %}
+              <div class="ad-badges">
+                {% if a.boutique_plan == 'premium' %}<span class="ad-badge premium">Premium</span>
+                {% elif a.boutique_plan == 'pro' %}<span class="ad-badge pro">Pro</span>{% endif %}
+                {% if a.urgent %}<span class="ad-badge urgent">🔴 Urgent</span>{% endif %}
+                {% if a.is_new %}<span class="ad-badge nouveau">Nouveau</span>{% endif %}
+              </div>
+            </div>
+            <div class="ad-body">
+              <div class="ad-title">{{ a.titre }}</div>
+              <div class="ad-price">
+                {% if a.prix_type == 'negociable' or a.prix == 0 %}
+                  <span style="font-size:12px;color:var(--text-muted)">A negocier</span>
+                {% elif a.prix_type == 'mois' %}
+                  {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA/mois
+                {% else %}
+                  {{ "{:,.0f}".format(a.prix).replace(',', ' ') }} FCFA
+                {% endif %}
+              </div>
+              <div class="ad-meta"><i class="ti ti-map-pin" style="font-size:12px"></i>{{ a.ville_nom }}</div>
+            </div>
+          </a>
+                  <button class="fav-btn" data-slug="{{ a.slug }}" data-titre="{{ a.titre|e }}" data-prix="{{ a.prix or 0 }}" data-ville="{{ a.ville_nom or '' }}" onclick="var b=this;toggleFavori(b.dataset.slug,b.dataset.titre,b.dataset.prix,b.dataset.ville,event)">&#9825;</button>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- BOUTIQUES VEDETTES -->
+  {% if boutique_du_jour %}
+
+{% if pub_mid %}
+<div class="pub-banniere" style="text-align:center;padding:16px;background:#f9f9f9;border:1px solid #eee;margin:10px 0">
+  <a href="{{ url_for('pub_clic', pub_id=pub_mid.id) }}" target="_blank" rel="noopener"><img src="{{ pub_mid.image_url }}" alt="Pub" style="max-height:90px;max-width:100%"></a>
+  <div style="font-size:9px;color:#bbb">Publicite</div>
+</div>
+{% endif %}
+<section class="section" style="padding:40px 0 20px">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <span style="background:#00b7aa;color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px">⭐ Boutique du Jour</span>
+      <span style="color:#888;font-size:13px">Mise en avant aujourd'hui</span>
+    </div>
+    <a href="/boutique/{{ boutique_du_jour.slug }}" style="text-decoration:none;display:block">
+      <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10);display:flex;flex-direction:row;min-height:160px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 8px 32px rgba(0,183,170,0.18)'" onmouseout="this.style.boxShadow='0 4px 24px rgba(0,0,0,0.10)'">
+        {% if boutique_du_jour.banniere %}
+        <div style="width:220px;min-width:220px;background:#f5f5f5;overflow:hidden;flex-shrink:0">
+          <img src="/static/uploads/{{ boutique_du_jour.banniere }}" alt="{{ boutique_du_jour.nom }}" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        {% elif boutique_du_jour.logo %}
+        <div style="width:220px;min-width:220px;background:#f0fffe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <img src="/static/uploads/{{ boutique_du_jour.logo }}" alt="{{ boutique_du_jour.nom }}" style="max-width:140px;max-height:120px;object-fit:contain">
+        </div>
+        {% else %}
+        <div style="width:220px;min-width:220px;background:#f0fffe;display:flex;align-items:center;justify-content:center;font-size:48px;flex-shrink:0">🏪</div>
+        {% endif %}
+        <div style="padding:24px 28px;flex:1;display:flex;flex-direction:column;justify-content:center">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <span style="font-size:20px;font-weight:800;color:#0a0a0a">{{ boutique_du_jour.nom }}</span>
+            {% if boutique_du_jour.badge_verifie %}<span style="background:#e8fffe;color:#00b7aa;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px">✓ Vérifié</span>{% endif %}
+          </div>
+          {% if boutique_du_jour.cat_nom %}<div style="color:#00b7aa;font-size:13px;margin-bottom:10px">{{ boutique_du_jour.cat_nom }}</div>{% endif %}
+          {% if boutique_du_jour.description %}
+          <div style="color:#555;font-size:14px;line-height:1.6;margin-bottom:16px">{{ boutique_du_jour.description[:150] }}{% if boutique_du_jour.description|length > 150 %}…{% endif %}</div>
+          {% endif %}
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <span style="background:#00b7aa;color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600">Voir la boutique →</span>
+            {% if boutique_du_jour.whatsapp %}
+            <span style="background:#25D366;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600">WhatsApp</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+{% if boutiques_vedettes %}
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Boutiques vedettes</h2>
+      <a href="/boutiques" class="section-link">Toutes les boutiques →</a>
+    </div>
+    <div class="boutiques-grid">
+      {% for b in boutiques_vedettes %}
+        <a href="/boutique/{{ b.slug }}" class="boutique-card" style="display:block">
+          <div class="boutique-logo">{{ b.nom[0].upper() }}</div>
+          <div class="boutique-name">{{ b.nom }}</div>
+          <div class="boutique-cat">{{ b.cat_nom }}</div>
+          <span class="plan-badge {{ b.plan }}">{{ b.plan }}</span>
+          {% if b.badge_verifie %}<span style="color:var(--primary);margin-left:6px">✓</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+<style>
+.hero-stats{display:flex;align-items:center;justify-content:center;gap:16px;margin:18px 0 6px;flex-wrap:wrap}
+.hero-stat{display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.hero-stat strong{font-size:2rem;font-weight:800;color:#00BFB3}
+.hero-stat span{font-size:.75rem;color:#555;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.hero-stat-sep{font-size:1.6rem;color:#ccc;font-weight:300;align-self:center}
+.hero-sub{text-align:center;color:#777;font-size:.9rem;margin:0 0 10px}
+@media(max-width:480px){.hero-stat strong{font-size:1.6rem}}
+
+.vedettes-carousel-outer{position:relative;overflow:hidden;padding:0 8px}
+.boutiques-grid.carousel-active{display:flex;gap:16px;transition:transform .4s ease;flex-wrap:nowrap}
+.boutiques-grid.carousel-active .boutique-card{flex:0 0 calc(33.33% - 11px);min-width:180px}
+@media(max-width:768px){.boutiques-grid.carousel-active .boutique-card{flex:0 0 calc(85% - 8px)}}
+.vcar-btn{position:absolute;top:50%;transform:translateY(-50%);background:#fff;border:1px solid #ddd;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15);color:#333;padding:0;line-height:1}
+.vcar-btn.vcar-prev{left:-4px}.vcar-btn.vcar-next{right:-4px}
+.vcar-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.vcar-dot{width:8px;height:8px;border-radius:50%;background:#ddd;cursor:pointer;transition:background .2s}
+.vcar-dot.active{background:#1a6b3c}
+</style>
+<script>
+(function(){
+var secs=document.querySelectorAll('section.section');
+var vedSec=null;
+for(var i=0;i<secs.length;i++){if(secs[i].textContent.indexOf('Boutiques vedettes')>=0){vedSec=secs[i];break;}}
+if(!vedSec)return;
+var grid=vedSec.querySelector('.boutiques-grid');
+if(!grid)return;
+var cards=grid.querySelectorAll('.boutique-card');
+if(cards.length<2)return;
+var outer=document.createElement('div');outer.className='vedettes-carousel-outer';
+grid.parentNode.insertBefore(outer,grid);outer.appendChild(grid);
+grid.classList.add('carousel-active');
+var pb=document.createElement('button');pb.className='vcar-btn vcar-prev';pb.innerHTML='&#8249;';pb.type='button';
+var nb=document.createElement('button');nb.className='vcar-btn vcar-next';nb.innerHTML='&#8250;';nb.type='button';
+outer.appendChild(pb);outer.appendChild(nb);
+var vis=window.innerWidth<=768?1:3;
+var cur=0;
+var dotsEl=document.createElement('div');dotsEl.className='vcar-dots';
+var total=Math.ceil(cards.length/vis);
+for(var d=0;d<total;d++){var dot=document.createElement('span');dot.className='vcar-dot'+(d===0?' active':'');dot.dataset.i=d;dotsEl.appendChild(dot);}
+outer.parentNode.insertBefore(dotsEl,outer.nextSibling);
+function goTo(idx){cur=Math.max(0,Math.min(idx,cards.length-vis));var w=cards[0].offsetWidth+16;grid.style.transform='translateX(-'+(cur*w)+'px)';var di=Math.floor(cur/vis);dotsEl.querySelectorAll('.vcar-dot').forEach(function(d,j){d.classList.toggle('active',j===di);});}
+nb.addEventListener('click',function(){if(cur+vis>=cards.length)goTo(0);else goTo(cur+1);});
+pb.addEventListener('click',function(){if(cur<=0)goTo(cards.length-vis);else goTo(cur-1);});
+dotsEl.querySelectorAll('.vcar-dot').forEach(function(d){d.addEventListener('click',function(){goTo(parseInt(d.dataset.i)*vis);});});
+var auto=setInterval(function(){if(cur+vis>=cards.length)goTo(0);else goTo(cur+1);},3500);
+outer.addEventListener('mouseenter',function(){clearInterval(auto);});
+outer.addEventListener('mouseleave',function(){auto=setInterval(function(){if(cur+vis>=cards.length)goTo(0);else goTo(cur+1);},3500);});
+var tx=0;
+outer.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},true);
+outer.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-tx;if(dx<-40)nb.click();else if(dx>40)pb.click();},true);
+})();
+</script>
+
+{% endblock %}
