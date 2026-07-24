@@ -1567,6 +1567,9 @@ def creer_boutique():
                 quartier_id_b = form.get('quartier_id') or None
             adresse_b = form.get('adresse', '')[:300]
             fermeture_message_b = form.get('fermeture_message', '')[:300]
+            disponibilite_type_b = form.get('disponibilite_type', 'horaires')
+            if disponibilite_type_b not in ('horaires', 'disponible', 'reservation'):
+                disponibilite_type_b = 'horaires'
             _jours_b = [('lun','Lundi'),('mar','Mardi'),('mer','Mercredi'),('jeu','Jeudi'),('ven','Vendredi'),('sam','Samedi'),('dim','Dimanche')]
             _lignes_horaires_b = []
             for _code_b, _label_b in _jours_b:
@@ -1579,10 +1582,10 @@ def creer_boutique():
                         _lignes_horaires_b.append(f'{_label_b} : {_hd_b} - {_hf_b}')
             horaires_b = chr(10).join(_lignes_horaires_b)
             db.execute('''INSERT INTO boutiques
-                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere,adresse,horaires,fermeture_message)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
+                (slug,nom,description,categorie_id,ville_id,quartier_id,telephone,whatsapp,email,plan,vendeur_id,actif,logo,banniere,adresse,horaires,fermeture_message,disponibilite_type)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''  ,
                 (slug, nom, desc, cat_id, ville_id, quartier_id_b, tel, wa, vendeur['email'], plan,
-                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname, adresse_b, horaires_b, fermeture_message_b))
+                 session['vendeur_id'], actif_initial, logo_fname, banniere_fname, adresse_b, horaires_b, fermeture_message_b, disponibilite_type_b))
             db.commit()
             b = db.execute('SELECT * FROM boutiques WHERE slug=?', (slug,)).fetchone()
             db.close()
@@ -1637,6 +1640,9 @@ def modifier_boutique():
             horaires=form.get('horaires',b['horaires'] or '')
         adresse=form.get('adresse',b['adresse'] or '')
         fermeture_message=form.get('fermeture_message',b['fermeture_message'] or '')
+        disponibilite_type=form.get('disponibilite_type', b['disponibilite_type'] if 'disponibilite_type' in b.keys() and b['disponibilite_type'] else 'horaires')
+        if disponibilite_type not in ('horaires','disponible','reservation'):
+            disponibilite_type='horaires'
         site_web=form.get('site_web',b['site_web'] or '')
         facebook=form.get('facebook',b['facebook'] or '')
         instagram=form.get('instagram',b['instagram'] or '')
@@ -1649,8 +1655,8 @@ def modifier_boutique():
         errors=[]
         if len(nom)<2: errors.append('Le nom est trop court.')
         if not errors:
-            db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=?,adresse=?,fermeture_message=? WHERE vendeur_id=?",
-                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,adresse,fermeture_message,session['vendeur_id']))
+            db.execute("UPDATE boutiques SET nom=?,description=?,telephone=?,whatsapp=?,email=?,logo=?,banniere=?,horaires=?,site_web=?,facebook=?,instagram=?,adresse=?,fermeture_message=?,disponibilite_type=? WHERE vendeur_id=?",
+                (nom,description,telephone,whatsapp,email,logo,banniere,horaires,site_web,facebook,instagram,adresse,fermeture_message,disponibilite_type,session['vendeur_id']))
             db.commit()
             db.close()
             flash('Boutique mise a jour.','success')
