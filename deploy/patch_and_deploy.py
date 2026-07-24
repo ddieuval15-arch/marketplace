@@ -1231,6 +1231,69 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# app.py -- recherche() selectionne aussi le logo de la boutique
+# ─────────────────────────────────────────────────────────────
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "        SELECT a.*, c.icon as cat_icon, c.slug as cat_slug, v.nom as ville_nom,\n               b.plan as boutique_plan, qr.nom as quartier_nom,\n               (SELECT url FROM photos WHERE annonce_id=a.id AND principale=1 LIMIT 1) as photo_url,\n               CASE WHEN datetime(a.created_at) >= datetime('now', '-48 hours') THEN 1 ELSE 0 END as is_new\n        {base} ORDER BY {order} LIMIT ? OFFSET ?",
+    "        SELECT a.*, c.icon as cat_icon, c.slug as cat_slug, v.nom as ville_nom,\n               b.plan as boutique_plan, b.logo as boutique_logo, qr.nom as quartier_nom,\n               (SELECT url FROM photos WHERE annonce_id=a.id AND principale=1 LIMIT 1) as photo_url,\n               CASE WHEN datetime(a.created_at) >= datetime('now', '-48 hours') THEN 1 ELSE 0 END as is_new\n        {base} ORDER BY {order} LIMIT ? OFFSET ?",
+    "ajoute b.logo (boutique_logo) a la requete de recherche, pour afficher le logo du vendeur en vignette quand l'annonce n'a pas de photo",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/base.html -- ajoute le badge Business (dore) sur les cartes d'annonces
+# ─────────────────────────────────────────────────────────────
+path = 'templates/base.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '    .ad-badge.premium { background: #ede9fe; color: var(--premium); }',
+    '    .ad-badge.premium { background: #ede9fe; color: var(--premium); }\n    .ad-badge.business { background: linear-gradient(135deg,#0a0a0a,#1a1a1a); color: #F5C518; border: 1px solid #F5C518; }',
+    "ajoute .ad-badge.business (dore, coherent avec .plan-badge.business), qui n'existait pas -- les annonces de boutiques Business n'avaient aucun badge",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/recherche.html -- redesign de la carte annonce (logo en fallback photo, badge Business)
+# ─────────────────────────────────────────────────────────────
+path = 'templates/pages/recherche.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '              <div class="ad-img">\n                {% if a.photo_url %}\n                  <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">\n                {% else %}\n                  <i class="ti ti-{{ a.cat_icon }}"></i>\n                {% endif %}\n                <div class="ad-badges">\n                  {% if a.boutique_plan == \'premium\' %}<span class="ad-badge premium">Premium</span>\n                  {% elif a.boutique_plan == \'pro\' %}<span class="ad-badge pro">Pro</span>{% endif %}\n                  {% if a.urgent %}<span class="ad-badge urgent">🔴 Urgent</span>{% endif %}\n                  {% if a.is_new %}<span class="ad-badge nouveau">Nouveau</span>{% endif %}\n                </div>\n              </div>',
+    '              <div class="ad-img"{% if not a.photo_url and a.boutique_logo %} style="background:var(--primary-light)"{% endif %}>\n                {% if a.photo_url %}\n                  <img src="/static/uploads/thumb_{{ a.photo_url }}" alt="{{ a.titre }}" style="width:100%;height:100%;object-fit:cover">\n                {% elif a.boutique_logo %}\n                  <img src="/static/uploads/{{ a.boutique_logo }}" alt="{{ a.titre }}" style="width:64px;height:64px;object-fit:cover;border-radius:50%;border:1px solid var(--border)">\n                {% else %}\n                  <i class="ti ti-{{ a.cat_icon }}"></i>\n                {% endif %}\n                <div class="ad-badges">\n                  {% if a.boutique_plan == \'business\' %}<span class="ad-badge business">Business</span>\n                  {% elif a.boutique_plan == \'premium\' %}<span class="ad-badge premium">Premium</span>\n                  {% elif a.boutique_plan == \'pro\' %}<span class="ad-badge pro">Pro</span>{% endif %}\n                  {% if a.urgent %}<span class="ad-badge urgent">🔴 Urgent</span>{% endif %}\n                  {% if a.is_new %}<span class="ad-badge nouveau">Nouveau</span>{% endif %}\n                </div>\n              </div>',
+    "affiche le logo de la boutique en vignette ronde (plutot qu'une simple icone de categorie) quand l'annonce n'a pas de photo, et ajoute le badge Business manquant (les annonces de vendeurs Business n'affichaient aucun badge)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # templates/pages/dashboard.html -- corrige le prix affiche du lien upgrade Business
 # ─────────────────────────────────────────────────────────────
 path = "templates/pages/dashboard.html"
