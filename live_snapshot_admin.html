@@ -76,6 +76,11 @@
   </a>
   {% endif %}
   {% if stats.boutiques_non_verifiees > 0 %}
+  <a href="#" onclick="showTab('boutiques');return false;" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+    🟡 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)
+  </a>
+  {% endif %}
+  {% if stats.boutiques_non_verifiees > 0 %}
   <a href="/admin?filtre_boutique=non_verifiees#boutiques" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
     🟡 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)
   </a>
