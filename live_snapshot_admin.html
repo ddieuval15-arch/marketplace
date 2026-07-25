@@ -76,7 +76,7 @@
   </a>
   {% endif %}
   {% if stats.boutiques_non_verifiees > 0 %}
-  <a href="#" onclick="showTab('boutiques');return false;" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
+  <a href="/admin?filtre_boutique=non_verifiees#boutiques" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">
     🟡 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)
   </a>
   {% endif %}
@@ -312,6 +312,14 @@
 
   <!-- TAB BOUTIQUES -->
   <div id="panel-boutiques" style="display:none;margin-bottom:32px">
+    <form method="GET" action="/admin#boutiques" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" name="q_boutique" value="{{ q_boutique or '' }}" placeholder="Rechercher une boutique, un vendeur, un email..." style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)">
+        <input type="checkbox" name="filtre_boutique" value="non_verifiees" {{ 'checked' if filtre_boutique == 'non_verifiees' else '' }}> Non vérifiées uniquement
+      </label>
+      <button type="submit" style="background:var(--primary);color:white;border:none;padding:9px 16px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer">Rechercher</button>
+      {% if q_boutique or filtre_boutique %}<a href="/admin#boutiques" style="font-size:12px;color:var(--text-muted)">Réinitialiser</a>{% endif %}
+    </form>
     <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;box-shadow:var(--shadow)">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>

@@ -2501,21 +2501,33 @@ def admin():
         FROM vendeurs v LEFT JOIN boutiques b ON b.vendeur_id=v.id
         WHERE v.is_admin=0 GROUP BY v.id ORDER BY v.created_at DESC LIMIT 20
     ''').fetchall()
-    boutiques_all = db.execute('''
+    q_boutique = request.args.get('q_boutique', '').strip()
+    filtre_boutique = request.args.get('filtre_boutique', '')
+    _b_conditions = []
+    _b_params = []
+    if filtre_boutique == 'non_verifiees':
+        _b_conditions.append('b.actif=1 AND b.badge_verifie=0')
+    if q_boutique:
+        _b_conditions.append('(b.nom LIKE ? OR v.nom LIKE ? OR v.email LIKE ?)')
+        _b_params += [f'%{q_boutique}%', f'%{q_boutique}%', f'%{q_boutique}%']
+    _b_where = ('WHERE ' + ' AND '.join(_b_conditions)) if _b_conditions else ''
+    _b_limit = 'LIMIT 300' if _b_conditions else 'LIMIT 50'
+    boutiques_all = db.execute(f'''
         SELECT b.*, v.nom as vendeur_nom, v.email as vendeur_email,
                COUNT(av.id) as nb_avis,
                ROUND(COALESCE(AVG(av.note), 0), 1) as note_moy
         FROM boutiques b
         JOIN vendeurs v ON b.vendeur_id=v.id
         LEFT JOIN avis av ON av.boutique_id=b.id
+        {_b_where}
         GROUP BY b.id
         ORDER BY
             CASE WHEN COUNT(av.id) >= 5 AND AVG(av.note) < 2.5 THEN 0
                  WHEN COUNT(av.id) >= 3 AND AVG(av.note) < 3.0 THEN 1
                  ELSE 2 END,
             b.created_at DESC
-        LIMIT 50
-    ''').fetchall()
+        {_b_limit}
+    ''', _b_params).fetchall()
     annonces_all = db.execute('''
         SELECT a.*, c.nom as cat_nom, v2.nom as ville_nom, b.nom as boutique_nom
         FROM annonces a JOIN categories c ON a.categorie_id=c.id
@@ -2558,7 +2570,8 @@ def admin():
     return render_template('pages/admin.html', stats=stats, vendeurs=vendeurs, plan_gratuit_periode=plan_gratuit_periode,
         boutiques=boutiques_all, annonces=annonces_all, paiements=paiements_all,
         offres_emploi=offres_emploi, villes=villes, categories=categories,
-            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs, investisseur_cfg=investisseur_cfg)
+            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs, investisseur_cfg=investisseur_cfg,
+            q_boutique=q_boutique, filtre_boutique=filtre_boutique)
 
 @app.route('/admin/offre-rapide', methods=['GET','POST'])
 @admin_required
