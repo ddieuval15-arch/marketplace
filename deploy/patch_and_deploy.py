@@ -1547,6 +1547,29 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# app.py -- diagnostic TEMPORAIRE : capture la traceback reelle de l'erreur 500 sur /mot-de-passe-oublie
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (diagnostic temporaire mot-de-passe-oublie) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    import traceback as _tb_diag\n    try:\n        return _mot_de_passe_oublie_impl()\n    except Exception as _e_diag:\n        return '<pre>DIAG500 ' + _tb_diag.format_exc() + '</pre>', 500\n\ndef _mot_de_passe_oublie_impl():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "enrobe temporairement la vue mot_de_passe_oublie pour afficher la traceback exacte en cas d'erreur 500 (diagnostic, a retirer ensuite)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
