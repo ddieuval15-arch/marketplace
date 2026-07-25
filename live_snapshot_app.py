@@ -1462,7 +1462,7 @@ def mot_de_passe_oublie():
     try:
         return _mot_de_passe_oublie_impl()
     except Exception as _e_diag:
-        return '<pre>DIAG500 ' + _tb_diag.format_exc() + '</pre>', 500
+        return '<pre>DIAG200 ' + _tb_diag.format_exc() + '</pre>', 200
 
 def _mot_de_passe_oublie_impl():
     villes, categories, quartiers = get_base_data()
