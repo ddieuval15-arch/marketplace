@@ -1562,6 +1562,11 @@ c, ch = apply_patch(
     "enrobe temporairement la vue mot_de_passe_oublie pour afficher la traceback exacte en cas d'erreur 500 (diagnostic, a retirer ensuite)",
 )
 changed = changed or ch
+print(f"::warning::[DIAG] patch mot_de_passe_oublie applique = {ch}")
+_marker = "def mot_de_passe_oublie"
+_idx = c.find(_marker)
+_extrait = c[_idx:_idx+250].replace(chr(10), " | ") if _idx >= 0 else "INTROUVABLE"
+print(f"::warning::[DIAG] extrait live autour de la route = {_extrait}")
 
 if changed:
     put_file(path, c)
