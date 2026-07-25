@@ -1713,6 +1713,29 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# database.py -- corrige la photo mal cadree de l'annonce "depannage-electrique" (remplace par le visuel CEELEC correct)
+# ─────────────────────────────────────────────────────────────
+print("=== database.py (correction photo depannage-electrique) ===")
+path = 'database.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "    # Seed quartiers\n    quartiers = [\n        ('tie-tie', 'Tie-Tie', 2), ('fond-tie-tie', 'Fond Tie-Tie', 2),",
+    "    # Corrige la photo mal cadree de l'annonce depannage-electrique (remplace par le bon visuel CEELEC)\n    try:\n        c.execute(\"UPDATE photos SET url=? WHERE url='a1b7e95928f741cbadd5ebb8639b5444.jpg' AND principale=1\", ('5aae560dc2f04de6816a05cdf76d672c.jpg',))\n    except Exception:\n        pass\n\n    # Seed quartiers\n    quartiers = [\n        ('tie-tie', 'Tie-Tie', 2), ('fond-tie-tie', 'Fond Tie-Tie', 2),",
+    "remplace la photo principale de l'annonce depannage-electrique (mal cadree, logo zoome) par le meme visuel CEELEC deja televerse pour l'autre annonce -- ne s'applique qu'une fois, tant que le vendeur n'a pas re-uploade sa propre photo",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
