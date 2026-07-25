@@ -1558,10 +1558,18 @@ changed = False
 c, ch = apply_patch(
     c,
     "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
-    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    import traceback as _tb_diag\n    try:\n        return _mot_de_passe_oublie_impl()\n    except Exception as _e_diag:\n        return '<pre>DIAG500 ' + _tb_diag.format_exc() + '</pre>', 500\n\ndef _mot_de_passe_oublie_impl():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    import traceback as _tb_diag\n    try:\n        return _mot_de_passe_oublie_impl()\n    except Exception as _e_diag:\n        return '<pre>DIAG200 ' + _tb_diag.format_exc() + '</pre>', 200\n\ndef _mot_de_passe_oublie_impl():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
     "enrobe temporairement la vue mot_de_passe_oublie pour afficher la traceback exacte en cas d'erreur 500 (diagnostic, a retirer ensuite)",
 )
 changed = changed or ch
+
+c, ch2 = apply_patch(
+    c,
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    import traceback as _tb_diag\n    try:\n        return _mot_de_passe_oublie_impl()\n    except Exception as _e_diag:\n        return '<pre>DIAG500 ' + _tb_diag.format_exc() + '</pre>', 500\n\ndef _mot_de_passe_oublie_impl():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    import traceback as _tb_diag\n    try:\n        return _mot_de_passe_oublie_impl()\n    except Exception as _e_diag:\n        return '<pre>DIAG200 ' + _tb_diag.format_exc() + '</pre>', 200\n\ndef _mot_de_passe_oublie_impl():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "convertit le wrapper diagnostic DIAG500 (deja applique) en DIAG200 pour pouvoir lire la traceback via un simple GET",
+)
+changed = changed or ch2
 print(f"::warning::[DIAG] patch mot_de_passe_oublie applique = {ch}")
 _marker = "def mot_de_passe_oublie"
 _idx = c.find(_marker)
