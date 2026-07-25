@@ -12,7 +12,6 @@
         {% if messages %}{% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}{% endif %}
       {% endwith %}
       <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group" style="margin-bottom:24px">
           <label class="form-label">Adresse email</label>
           <input type="email" name="email" required autofocus class="form-control" placeholder="votre@email.com">

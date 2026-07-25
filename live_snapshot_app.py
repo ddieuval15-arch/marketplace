@@ -1458,13 +1458,6 @@ def connexion():
 
 @app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
 def mot_de_passe_oublie():
-    import traceback as _tb_diag
-    try:
-        return _mot_de_passe_oublie_impl()
-    except Exception as _e_diag:
-        return '<pre>DIAG200 ' + _tb_diag.format_exc() + '</pre>', 200
-
-def _mot_de_passe_oublie_impl():
     villes, categories, quartiers = get_base_data()
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()

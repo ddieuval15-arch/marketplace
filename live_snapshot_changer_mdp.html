@@ -11,7 +11,6 @@
         {% if messages %}{% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}{% endif %}
       {% endwith %}
       <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label class="form-label">Ancien mot de passe</label>
           <input type="password" name="ancien_mdp" required class="form-control">
