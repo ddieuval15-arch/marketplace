@@ -1486,6 +1486,66 @@ else:
     print("  -> nouveau fichier cree sur le serveur")
 
 # ─────────────────────────────────────────────────────────────
+# app.py -- recherche + filtre "non verifiees" sur la table boutiques admin
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (recherche boutiques admin) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "    boutiques_all = db.execute('''\n        SELECT b.*, v.nom as vendeur_nom, v.email as vendeur_email,\n               COUNT(av.id) as nb_avis,\n               ROUND(COALESCE(AVG(av.note), 0), 1) as note_moy\n        FROM boutiques b\n        JOIN vendeurs v ON b.vendeur_id=v.id\n        LEFT JOIN avis av ON av.boutique_id=b.id\n        GROUP BY b.id\n        ORDER BY\n            CASE WHEN COUNT(av.id) >= 5 AND AVG(av.note) < 2.5 THEN 0\n                 WHEN COUNT(av.id) >= 3 AND AVG(av.note) < 3.0 THEN 1\n                 ELSE 2 END,\n            b.created_at DESC\n        LIMIT 50\n    ''').fetchall()",
+    "    q_boutique = request.args.get('q_boutique', '').strip()\n    filtre_boutique = request.args.get('filtre_boutique', '')\n    _b_conditions = []\n    _b_params = []\n    if filtre_boutique == 'non_verifiees':\n        _b_conditions.append('b.actif=1 AND b.badge_verifie=0')\n    if q_boutique:\n        _b_conditions.append('(b.nom LIKE ? OR v.nom LIKE ? OR v.email LIKE ?)')\n        _b_params += [f'%{q_boutique}%', f'%{q_boutique}%', f'%{q_boutique}%']\n    _b_where = ('WHERE ' + ' AND '.join(_b_conditions)) if _b_conditions else ''\n    _b_limit = 'LIMIT 300' if _b_conditions else 'LIMIT 50'\n    boutiques_all = db.execute(f'''\n        SELECT b.*, v.nom as vendeur_nom, v.email as vendeur_email,\n               COUNT(av.id) as nb_avis,\n               ROUND(COALESCE(AVG(av.note), 0), 1) as note_moy\n        FROM boutiques b\n        JOIN vendeurs v ON b.vendeur_id=v.id\n        LEFT JOIN avis av ON av.boutique_id=b.id\n        {_b_where}\n        GROUP BY b.id\n        ORDER BY\n            CASE WHEN COUNT(av.id) >= 5 AND AVG(av.note) < 2.5 THEN 0\n                 WHEN COUNT(av.id) >= 3 AND AVG(av.note) < 3.0 THEN 1\n                 ELSE 2 END,\n            b.created_at DESC\n        {_b_limit}\n    ''', _b_params).fetchall()",
+    "ajoute la recherche (nom/vendeur/email) et le filtre non_verifiees sur la liste des boutiques admin, avec limite relevee a 300 quand un filtre est actif",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    "    return render_template('pages/admin.html', stats=stats, vendeurs=vendeurs, plan_gratuit_periode=plan_gratuit_periode,\n        boutiques=boutiques_all, annonces=annonces_all, paiements=paiements_all,\n        offres_emploi=offres_emploi, villes=villes, categories=categories,\n            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs, investisseur_cfg=investisseur_cfg)",
+    "    return render_template('pages/admin.html', stats=stats, vendeurs=vendeurs, plan_gratuit_periode=plan_gratuit_periode,\n        boutiques=boutiques_all, annonces=annonces_all, paiements=paiements_all,\n        offres_emploi=offres_emploi, villes=villes, categories=categories,\n            boutiques_en_attente=boutiques_en_attente, ambassadeurs=ambassadeurs, investisseur_cfg=investisseur_cfg,\n            q_boutique=q_boutique, filtre_boutique=filtre_boutique)",
+    "transmet q_boutique et filtre_boutique au template admin pour prefill du formulaire",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/admin.html -- barre de recherche boutiques + lien filtre non verifiees
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/admin.html (recherche boutiques) ===")
+path = 'templates/pages/admin.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '  {% if stats.boutiques_non_verifiees > 0 %}\n  <a href="#" onclick="showTab(\'boutiques\');return false;" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">\n    🟡 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)\n  </a>\n  {% endif %}',
+    '  {% if stats.boutiques_non_verifiees > 0 %}\n  <a href="/admin?filtre_boutique=non_verifiees#boutiques" style="display:flex;align-items:center;gap:8px;background:#fef9c3;border:1px solid #eab308;color:#713f12;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">\n    🟡 {{ stats.boutiques_non_verifiees }} boutique(s) active(s) non verifiee(s)\n  </a>\n  {% endif %}',
+    "le compteur de boutiques non verifiees devient un lien filtrant reellement la liste (au lieu de juste changer d'onglet)",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '  <div id="panel-boutiques" style="display:none;margin-bottom:32px">\n    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;box-shadow:var(--shadow)">',
+    '  <div id="panel-boutiques" style="display:none;margin-bottom:32px">\n    <form method="GET" action="/admin#boutiques" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">\n      <input type="text" name="q_boutique" value="{{ q_boutique or \'\' }}" placeholder="Rechercher une boutique, un vendeur, un email..." style="flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">\n      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)">\n        <input type="checkbox" name="filtre_boutique" value="non_verifiees" {{ \'checked\' if filtre_boutique == \'non_verifiees\' else \'\' }}> Non vérifiées uniquement\n      </label>\n      <button type="submit" style="background:var(--primary);color:white;border:none;padding:9px 16px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer">Rechercher</button>\n      {% if q_boutique or filtre_boutique %}<a href="/admin#boutiques" style="font-size:12px;color:var(--text-muted)">Réinitialiser</a>{% endif %}\n    </form>\n    <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;box-shadow:var(--shadow)">',
+    "ajoute une barre de recherche (nom/vendeur/email) + case a cocher non verifiees au-dessus de la table boutiques",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
