@@ -1583,6 +1583,95 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# app.py -- retire le wrapper de diagnostic temporaire sur mot_de_passe_oublie
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (retrait diagnostic mot-de-passe-oublie) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    import traceback as _tb_diag\n    try:\n        return _mot_de_passe_oublie_impl()\n    except Exception as _e_diag:\n        return '<pre>DIAG200 ' + _tb_diag.format_exc() + '</pre>', 200\n\ndef _mot_de_passe_oublie_impl():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "@app.route('/mot-de-passe-oublie', methods=['GET', 'POST'])\ndef mot_de_passe_oublie():\n    villes, categories, quartiers = get_base_data()\n    if request.method == 'POST':",
+    "retire le wrapper try/except de diagnostic, la vraie cause (csrf_token undefined) est corrigee dans les templates",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/mot_de_passe_oublie.html -- retire csrf_token() jamais initialise (cause du bug 500)
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/mot_de_passe_oublie.html (fix csrf_token) ===")
+path = 'templates/pages/mot_de_passe_oublie.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "      <form method=\"POST\">\n        <input type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\">\n        <div class=\"form-group\" style=\"margin-bottom:24px\">\n          <label class=\"form-label\">Adresse email</label>",
+    "      <form method=\"POST\">\n        <div class=\"form-group\" style=\"margin-bottom:24px\">\n          <label class=\"form-label\">Adresse email</label>",
+    "retire le champ csrf_token() qui n'est jamais initialise (aucun CSRF configure dans app.py) -- causait un jinja2.exceptions.UndefinedError et un 500 sur toute la page",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/reinitialiser_mdp.html -- meme correction
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/reinitialiser_mdp.html (fix csrf_token) ===")
+path = 'templates/pages/reinitialiser_mdp.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "      <form method=\"POST\">\n        <input type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\">\n        <div class=\"form-group\">\n          <label class=\"form-label\">Nouveau mot de passe</label>",
+    "      <form method=\"POST\">\n        <div class=\"form-group\">\n          <label class=\"form-label\">Nouveau mot de passe</label>",
+    "retire le champ csrf_token() jamais initialise -- meme bug 500 que mot_de_passe_oublie.html",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/changer_mdp.html -- meme correction
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/changer_mdp.html (fix csrf_token) ===")
+path = 'templates/pages/changer_mdp.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "      <form method=\"POST\">\n        <input type=\"hidden\" name=\"csrf_token\" value=\"{{ csrf_token() }}\">\n        <div class=\"form-group\">\n          <label class=\"form-label\">Ancien mot de passe</label>",
+    "      <form method=\"POST\">\n        <div class=\"form-group\">\n          <label class=\"form-label\">Ancien mot de passe</label>",
+    "retire le champ csrf_token() jamais initialise -- meme bug 500 (cette page necessite une session connectee pour etre atteinte, mais le bug existait aussi ici)",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
