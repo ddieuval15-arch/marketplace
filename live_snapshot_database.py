@@ -376,6 +376,9 @@ def init_db():
         "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
         "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
         "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
+        "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
+        "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
+        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
     ]
     for sql in migrations:
         try:
@@ -396,6 +399,16 @@ def init_db():
             c.execute("INSERT OR IGNORE INTO site_config (cle, valeur) VALUES (?, ?)", (_k, _v))
         except Exception:
             pass
+
+    # Photo CEELEC PNR -- rattachee manuellement (upload initial defaillant, cf conversation)
+    try:
+        _ann_ceelec = c.execute("SELECT id FROM annonces WHERE slug='depannage-electricite-pointe-noire-intervention-rapide'").fetchone()
+        if _ann_ceelec:
+            _nb_photos_ceelec = c.execute("SELECT COUNT(*) FROM photos WHERE annonce_id=?", (_ann_ceelec[0],)).fetchone()[0]
+            if _nb_photos_ceelec == 0:
+                c.execute("INSERT INTO photos (annonce_id, url, principale) VALUES (?, ?, 1)", (_ann_ceelec[0], '5aae560dc2f04de6816a05cdf76d672c.jpg'))
+    except Exception:
+        pass
 
     # Seed quartiers
     quartiers = [
