@@ -1835,50 +1835,6 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
-# ─────────────────────────────────────────────────────────────
-# Diagnostic temporaire (test reel) : soumission test sur /deposer-emploi
-# pour verifier que le fix du NameError fonctionne bout en bout en prod
-# ─────────────────────────────────────────────────────────────
-print("=== DIAG test soumission /deposer-emploi ===")
-try:
-    import sqlite3, tempfile, os as _os
-    _db_url = f"{API_BASE}/files/path{APP_ROOT}/data/marketplace.db"
-    r = requests.get(_db_url, headers=HEADERS, timeout=60)
-    r.raise_for_status()
-    _tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
-    _tmp.write(r.content)
-    _tmp.close()
-    _conn = sqlite3.connect(_tmp.name)
-    _cur = _conn.cursor()
-    _cur.execute("SELECT id FROM villes WHERE nom LIKE '%Pointe-Noire%' LIMIT 1")
-    _row = _cur.fetchone()
-    _ville_id = _row[0] if _row else None
-    _conn.close()
-    _os.unlink(_tmp.name)
-    print(f"::warning::[DIAG test emploi] ville_id Pointe-Noire = {_ville_id}")
-
-    if _ville_id:
-        _test_payload = {
-            "emploi_type": "offre",
-            "titre": "TEST DIAGNOSTIC AUTOMATIQUE - a supprimer",
-            "entreprise": "Test Diagnostic HelloBiz (a supprimer)",
-            "secteur": "commerce-vente",
-            "contrat": "CDD",
-            "ville_id": str(_ville_id),
-            "description": "Annonce de test automatique creee pour verifier le fix du bug de depot d'offre d'emploi. Cette annonce et le compte associe peuvent etre supprimes sans risque depuis l'admin.",
-            "telephone": "0000000001",
-            "salaire": "150000",
-            "password": "testdiag1234",
-        }
-        _resp = requests.post("https://hellobizcongo.com/deposer-emploi", data=_test_payload, timeout=30, allow_redirects=True)
-        print(f"::warning::[DIAG test emploi] status={_resp.status_code} url_finale={_resp.url}")
-        _ok_marker = "annonce est en ligne" in _resp.text or "/annonce/" in _resp.url
-        print(f"::warning::[DIAG test emploi] succes_probable={_ok_marker}")
-        if "DIAG500" in _resp.text or "Traceback" in _resp.text or _resp.status_code >= 500:
-            print(f"::warning::[DIAG test emploi] ECHEC -- extrait reponse: {_resp.text[:500]}")
-except Exception as e:
-    print(f"::warning::[DIAG test emploi] exception: {e}")
-
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
