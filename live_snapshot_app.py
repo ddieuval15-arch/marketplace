@@ -670,9 +670,6 @@ def deposer_emploi():
                 aslug = unique_slug(db, 'annonces', slugify(titre))
                 import datetime as _dt
                 expire_at = (_dt.datetime.now() + _dt.timedelta(days=60)).strftime('%Y-%m-%d %H:%M:%S')
-                quartier_libre = request.form.get('quartier_libre', '').strip() or None
-                if str(quartier_id) == 'autre':
-                    quartier_id = None
                 db.execute('''INSERT INTO annonces
                     (slug,titre,description,prix,prix_type,categorie_id,ville_id,boutique_id,
                      emploi_type,emploi_secteur,emploi_salaire,statut,expire_at)
