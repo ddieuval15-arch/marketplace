@@ -419,6 +419,9 @@ def init_db():
         "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
         "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
         "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
+        "ALTER TABLE boutiques ADD COLUMN adresse TEXT",
+        "ALTER TABLE boutiques ADD COLUMN fermeture_message TEXT",
+        "ALTER TABLE boutiques ADD COLUMN disponibilite_type TEXT",
     ]
     for sql in migrations:
         try:
@@ -613,6 +616,40 @@ def init_db():
     # Corrige la photo mal cadree de l'annonce depannage-electrique (remplace par le bon visuel CEELEC)
     try:
         c.execute("UPDATE photos SET url=? WHERE url='a1b7e95928f741cbadd5ebb8639b5444.jpg' AND principale=1", ('5aae560dc2f04de6816a05cdf76d672c.jpg',))
+    except Exception:
+        pass
+
+    # Photo CEELEC PNR -- rattachee manuellement (upload initial defaillant, cf conversation)
+    try:
+        _ann_ceelec = c.execute("SELECT id FROM annonces WHERE slug='depannage-electricite-pointe-noire-intervention-rapide'").fetchone()
+        if _ann_ceelec:
+            _nb_photos_ceelec = c.execute("SELECT COUNT(*) FROM photos WHERE annonce_id=?", (_ann_ceelec[0],)).fetchone()[0]
+            if _nb_photos_ceelec == 0:
+                c.execute("INSERT INTO photos (annonce_id, url, principale) VALUES (?, ?, 1)", (_ann_ceelec[0], '5aae560dc2f04de6816a05cdf76d672c.jpg'))
+    except Exception:
+        pass
+
+    # Corrige la photo mal cadree de l'annonce depannage-electrique (remplace par le bon visuel CEELEC)
+    try:
+        c.execute("UPDATE photos SET url=? WHERE url='a1b7e95928f741cbadd5ebb8639b5444.jpg' AND principale=1", ('5aae560dc2f04de6816a05cdf76d672c.jpg',))
+    except Exception:
+        pass
+
+    # Corrige l'attribution recruteur des annonces emploi postees le 26/07/2026
+    # (colonne emploi_entreprise inexistante -> toutes affichaient le nom de la
+    # 1ere boutique creee sous le meme compte/telephone, soit "RENCO CONGO")
+    try:
+        _backfills_emploi_entreprise = [
+            ('%soudeur%argoniste%', 'RENCO CONGO'),
+            ('%agent commercial%', 'Grands Moulins du Congo'),
+            ('%femme de chambre%', 'H\u00f4tel Saint Jean'),
+            ('%responsable qhse%', 'Codisco Gibat'),
+        ]
+        for _like, _entreprise in _backfills_emploi_entreprise:
+            c.execute(
+                "UPDATE annonces SET emploi_entreprise=? WHERE emploi_entreprise IS NULL AND lower(titre) LIKE ?",
+                (_entreprise, _like)
+            )
     except Exception:
         pass
 
