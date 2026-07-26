@@ -7,6 +7,24 @@
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
     <strong>{{ total }}</strong> abonne(s) actif(s) au total
   </div>
+  {% if offres_a_diffuser %}
+  <h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Offres a diffuser</h2>
+  {% for o in offres_a_diffuser %}
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+      <span style="font-weight:700">{{ o.titre }}</span>
+      <span style="color:var(--text-muted);font-size:12px">{{ o.ville_nom }} - {{ o.created_at[:10] }} - {{ o.nb }} abonne(s) cible(s)</span>
+    </div>
+    <textarea readonly id="msg-{{ loop.index }}" style="width:100%;min-height:50px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-secondary);color:var(--text);margin-bottom:8px">{{ o.message }}</textarea>
+    <textarea readonly id="nums-{{ loop.index }}" style="position:absolute;left:-9999px">{{ o.numeros }}</textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="https://wa.me/?text={{ o.message|urlencode }}" target="_blank" style="display:inline-block;background:#25D366;color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Ouvrir dans WhatsApp</a>
+      <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('msg-{{ loop.index }}').value);this.textContent='Copie !';setTimeout(()=>this.textContent='Copier le message',1500)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copier le message</button>
+      <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('nums-{{ loop.index }}').value);this.textContent='Copie !';setTimeout(()=>this.textContent='Copier les numeros ({{ o.nb }})',1500)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copier les numeros ({{ o.nb }})</button>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
   {% if alertes %}
   <h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Par secteur</h2>
   {% for a in alertes %}

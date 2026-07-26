@@ -1067,6 +1067,24 @@ EMPLOI_SECTEURS = {
     "nettoyage-maintenance": "Nettoyage / Maintenance",
 }
 
+def _normalise_secteur_txt(txt):
+    if not txt:
+        return ''
+    txt = txt.lower()
+    for _a, _b in [('\u00e9','e'),('\u00e8','e'),('\u00ea','e'),('\u00e0','a'),('\u00f4','o'),('\u00fb','u'),('\u00ee','i'),('\u00e7','c')]:
+        txt = txt.replace(_a, _b)
+    return re.sub(r'[^a-z0-9]+', '', txt)
+
+_SECTEUR_ANNONCE_TO_SLUG = {_normalise_secteur_txt(_lbl): _slug for _slug, _lbl in EMPLOI_SECTEURS.items()}
+_SECTEUR_ANNONCE_TO_SLUG.update({
+    'comptabilitefinance': 'finance-comptabilite',
+    'educationformation': 'enseignement-formation',
+    'securite': 'securite-gardiennage',
+})
+
+def secteur_slug_depuis_annonce(txt):
+    return _SECTEUR_ANNONCE_TO_SLUG.get(_normalise_secteur_txt(txt))
+
 @app.route("/emploi/<secteur_slug>")
 def emploi_secteur(secteur_slug):
     if secteur_slug not in EMPLOI_SECTEURS:
@@ -1127,8 +1145,30 @@ def admin_alertes_emploi():
     """).fetchall()
     total = db.execute('SELECT COUNT(*) as n FROM alertes_emploi WHERE actif=1').fetchone()['n']
     recent = db.execute('SELECT * FROM alertes_emploi ORDER BY created_at DESC LIMIT 20').fetchall()
+    offres_a_diffuser = []
+    cat_emploi_oad = db.execute('SELECT id FROM categories WHERE slug="emploi"').fetchone()
+    if cat_emploi_oad:
+        _offres = db.execute("""
+            SELECT a.slug, a.titre, a.emploi_secteur, a.created_at, v.nom as ville_nom
+            FROM annonces a JOIN villes v ON a.ville_id=v.id
+            WHERE a.categorie_id=? AND a.statut='active'
+            ORDER BY a.created_at DESC LIMIT 10
+        """, (cat_emploi_oad['id'],)).fetchall()
+        for _o in _offres:
+            _slug_secteur = secteur_slug_depuis_annonce(_o['emploi_secteur']) or '__aucun__'
+            _nums = db.execute(
+                "SELECT DISTINCT whatsapp FROM alertes_emploi WHERE actif=1 AND (secteur='tous' OR secteur=?)",
+                (_slug_secteur,)
+            ).fetchall()
+            _numeros = sorted({n['whatsapp'] for n in _nums})
+            _msg = f"Bonjour ! Nouvelle offre sur helloBiz : {_o['titre']} - {_o['ville_nom']} - https://hellobizcongo.com/annonce/{_o['slug']}"
+            offres_a_diffuser.append({
+                'titre': _o['titre'], 'slug': _o['slug'], 'ville_nom': _o['ville_nom'],
+                'created_at': _o['created_at'], 'nb': len(_numeros),
+                'numeros': ', '.join(_numeros), 'message': _msg,
+            })
     db.close()
-    return render_template('pages/admin_alertes_emploi.html', alertes=alertes, total=total, recent=recent)
+    return render_template('pages/admin_alertes_emploi.html', alertes=alertes, total=total, recent=recent, offres_a_diffuser=offres_a_diffuser)
 
 @app.route('/admin/supprimer-alerte-emploi/<int:aid>', methods=['POST'])
 def supprimer_alerte_emploi(aid):
