@@ -1736,6 +1736,50 @@ else:
     print("  -> aucun changement necessaire")
 
 # ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# templates/pages/article.html + blog.html -- corrige le bug SEO : {% block meta %}
+# n'existe pas dans base.html (qui definit description/og_title/og_desc/og_type/jsonld),
+# donc la description meta et l'OG restaient sur le fallback generique du site pour
+# TOUS les articles de blog. Reprend le contenu (a.chapeau / a.titre) dans les bons blocks.
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/article.html (fix meta description SEO) ===")
+path = 'templates/pages/article.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '{% extends \'base.html\' %}\n{% block title %}{{ a.titre }} — Blog helloBiz{% endblock %}\n{% block meta %}\n<meta name="description" content="{{ a.chapeau or a.titre }}">\n<meta property="og:title" content="{{ a.titre }}">\n<meta property="og:description" content="{{ a.chapeau or \'\' }}">\n{% if a.image_url %}<meta property="og:image" content="{{ a.image_url }}">{% endif %}\n<meta property="og:type" content="article">\n<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"{{ a.titre }}","description":"{{ a.chapeau or \'\' }}","datePublished":"{{ a.created_at[:10] }}","publisher":{"@type":"Organization","name":"helloBiz Congo","url":"https://hellobizcongo.com"}}</script>\n{% endblock %}',
+    '{% extends \'base.html\' %}\n{% block title %}{{ a.titre }} — Blog helloBiz{% endblock %}\n{% block description %}{{ (a.chapeau or a.titre)[:160] }}{% endblock %}\n{% block og_title %}{{ a.titre }}{% endblock %}\n{% block og_desc %}{{ (a.chapeau or \'\')[:200] }}{% endblock %}\n{% block og_type %}article{% endblock %}\n{% block og_image %}{% if a.image_url %}{{ a.image_url }}{% else %}{{ super() }}{% endif %}{% endblock %}\n{% block jsonld %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"{{ a.titre }}","description":"{{ a.chapeau or \'\' }}","datePublished":"{{ a.created_at[:10] }}","publisher":{"@type":"Organization","name":"helloBiz Congo","url":"https://hellobizcongo.com"}}</script>{% endblock %}',
+    "remplace le {% block meta %} (inexistant dans base.html, donc jamais rendu) par les vrais blocks description/og_title/og_desc/og_type/og_image/jsonld hérités de base.html, avec le chapeau de l'article comme meta description au lieu du fallback generique du site",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+print("=== templates/pages/blog.html (fix meta description SEO) ===")
+path = 'templates/pages/blog.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '{% extends \'base.html\' %}\n{% block title %}Blog helloBiz — Conseils business à Pointe-Noire{% endblock %}\n{% block meta %}\n<meta name="description" content="Conseils, guides et actualités pour les vendeurs et acheteurs à Pointe-Noire, Congo. helloBiz, la marketplace locale.">\n<meta property="og:title" content="Blog helloBiz — Conseils business à Pointe-Noire">\n<meta property="og:description" content="Conseils, guides et actualités pour développer votre activité à Pointe-Noire.">\n{% endblock %}',
+    "{% extends 'base.html' %}\n{% block title %}Blog helloBiz — Conseils business à Pointe-Noire{% endblock %}\n{% block description %}Conseils, guides et actualités pour les vendeurs et acheteurs à Pointe-Noire, Congo. helloBiz, la marketplace locale.{% endblock %}\n{% block og_title %}Blog helloBiz — Conseils business à Pointe-Noire{% endblock %}\n{% block og_desc %}Conseils, guides et actualités pour développer votre activité à Pointe-Noire.{% endblock %}",
+    "remplace le {% block meta %} (inexistant dans base.html, donc jamais rendu) par les vrais blocks description/og_title/og_desc herités de base.html sur la page listing du blog",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
