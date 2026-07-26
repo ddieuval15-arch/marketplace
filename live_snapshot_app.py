@@ -700,7 +700,12 @@ def robots():
 def sitemap():
     db = get_db()
     annonces = db.execute('SELECT slug, created_at FROM annonces WHERE statut="active"').fetchall()
-    boutiques = db.execute('SELECT slug, created_at FROM boutiques WHERE actif=1').fetchall()
+    boutiques = db.execute('''
+        SELECT b.slug, b.created_at FROM boutiques b
+        WHERE b.actif=1 AND EXISTS (
+            SELECT 1 FROM annonces a WHERE a.boutique_id=b.id AND a.statut='active'
+        )
+    ''').fetchall()
     # Auto-publier les articles dont la date est atteinte
     db.execute("UPDATE blog_articles SET statut='publie' WHERE statut IN ('brouillon','planifie') AND published_at IS NOT NULL AND datetime(published_at) <= datetime('now', '+1 hour')")
     db.commit()
