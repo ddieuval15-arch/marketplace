@@ -1,13 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}{{ a.titre }} — Blog helloBiz{% endblock %}
-{% block meta %}
-<meta name="description" content="{{ a.chapeau or a.titre }}">
-<meta property="og:title" content="{{ a.titre }}">
-<meta property="og:description" content="{{ a.chapeau or '' }}">
-{% if a.image_url %}<meta property="og:image" content="{{ a.image_url }}">{% endif %}
-<meta property="og:type" content="article">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"{{ a.titre }}","description":"{{ a.chapeau or '' }}","datePublished":"{{ a.created_at[:10] }}","publisher":{"@type":"Organization","name":"helloBiz Congo","url":"https://hellobizcongo.com"}}</script>
-{% endblock %}
+{% block description %}{{ (a.chapeau or a.titre)[:160] }}{% endblock %}
+{% block og_title %}{{ a.titre }}{% endblock %}
+{% block og_desc %}{{ (a.chapeau or '')[:200] }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if a.image_url %}{{ a.image_url }}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block jsonld %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"{{ a.titre }}","description":"{{ a.chapeau or '' }}","datePublished":"{{ a.created_at[:10] }}","publisher":{"@type":"Organization","name":"helloBiz Congo","url":"https://hellobizcongo.com"}}</script>{% endblock %}
 {% block content %}
 <div style="max-width:780px;margin:0 auto;padding:32px 16px">
   <a href="/blog" style="color:var(--primary);text-decoration:none;font-size:14px">← Retour au blog</a>
