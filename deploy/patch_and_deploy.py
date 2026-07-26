@@ -1917,54 +1917,6 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
-# ─────────────────────────────────────────────────────────────
-# DIAGNOSTIC TEMPORAIRE (a retirer une fois confirme) : supprime
-# directement en base l'annonce de test "TEST DIAGNOSTIC AUTOMATIQUE -
-# a supprimer" ainsi que la boutique et le vendeur de test associes
-# (telephone 0000000001), demande par Dony qui n'arrive pas a la
-# supprimer depuis /admin (colonnes Actions hors ecran sur son navigateur).
-# ─────────────────────────────────────────────────────────────
-print("=== Suppression directe en base de l'annonce de test emploi ===")
-import sqlite3 as _sqlite3
-_db_path_remote = f"{APP_ROOT}/data/marketplace.db"
-_db_url = f"{API_BASE}/files/path{_db_path_remote}"
-_r_db = requests.get(_db_url, headers=HEADERS, timeout=60)
-if not _r_db.ok:
-    print(f"::error::telechargement DB echoue : HTTP {_r_db.status_code}")
-else:
-    _local_db = "/tmp/_marketplace_cleanup.db"
-    with open(_local_db, "wb") as _f:
-        _f.write(_r_db.content)
-    _conn = _sqlite3.connect(_local_db)
-    _cur = _conn.cursor()
-    _cur.execute("SELECT id, boutique_id FROM annonces WHERE slug='test-diagnostic-automatique-a-supprimer'")
-    _row = _cur.fetchone()
-    if _row:
-        _ann_id, _bout_id = _row
-        _cur.execute("DELETE FROM photos WHERE annonce_id=?", (_ann_id,))
-        _cur.execute("DELETE FROM annonces WHERE id=?", (_ann_id,))
-        print(f"::warning::[CLEANUP] annonce id={_ann_id} supprimee")
-        _cur.execute("SELECT COUNT(*) FROM annonces WHERE boutique_id=?", (_bout_id,))
-        _reste = _cur.fetchone()[0]
-        if _reste == 0:
-            _cur.execute("SELECT vendeur_id FROM boutiques WHERE id=?", (_bout_id,))
-            _vrow = _cur.fetchone()
-            _cur.execute("DELETE FROM boutiques WHERE id=?", (_bout_id,))
-            print(f"::warning::[CLEANUP] boutique id={_bout_id} supprimee (plus aucune annonce)")
-            if _vrow:
-                _vend_id = _vrow[0]
-                _cur.execute("DELETE FROM vendeurs WHERE id=? AND telephone='0000000001'", (_vend_id,))
-                print(f"::warning::[CLEANUP] vendeur id={_vend_id} (tel 0000000001) supprime")
-        else:
-            print(f"::warning::[CLEANUP] boutique id={_bout_id} conservee ({_reste} autre(s) annonce(s))")
-        _conn.commit()
-        with open(_local_db, "rb") as _f:
-            put_file_bytes("data/marketplace.db", _f.read())
-        print("::warning::[CLEANUP] base de donnees mise a jour sur le serveur")
-    else:
-        print("::warning::[CLEANUP] annonce test introuvable (deja supprimee ?)")
-    _conn.close()
-
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
