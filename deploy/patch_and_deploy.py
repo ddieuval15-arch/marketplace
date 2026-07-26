@@ -1806,21 +1806,6 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
-# ─────────────────────────────────────────────────────────────
-# Diagnostic temporaire (lecture seule) : compte les URLs du sitemap live
-# ─────────────────────────────────────────────────────────────
-print("=== DIAG sitemap.xml ===")
-try:
-    _sm = requests.get("https://hellobizcongo.com/sitemap.xml", timeout=30)
-    _txt = _sm.text
-    _n_url = _txt.count("<url>")
-    _n_boutique = _txt.count("/boutique/")
-    _n_annonce = _txt.count("/annonce/")
-    _n_blog = _txt.count("/blog/")
-    print(f"::warning::[DIAG sitemap] total={_n_url} boutiques={_n_boutique} annonces={_n_annonce} blog={_n_blog}")
-except Exception as e:
-    print(f"::warning::[DIAG sitemap] exception: {e}")
-
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
