@@ -1835,6 +1835,64 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
+# ─────────────────────────────────────────────────────────────
+# app.py -- corrige l'attribution "Contacter le recruteur" sur /deposer-emploi
+# la colonne annonces.emploi_entreprise etait deja attendue par annonce.html
+# mais jamais remplie a l'insertion -> toutes les offres postees depuis le
+# meme compte/telephone affichaient le nom de la 1ere boutique creee
+# (RENCO CONGO), meme pour des offres d'autres entreprises (Grands Moulins,
+# Hotel Saint Jean, Codisco Gibat) publiees le 26/07/2026.
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (remplit emploi_entreprise a la creation de l'annonce) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "                db.execute('''INSERT INTO annonces\n                    (slug,titre,description,prix,prix_type,categorie_id,ville_id,boutique_id,\n                     emploi_type,emploi_secteur,emploi_salaire,statut,expire_at)\n                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',\n                    (aslug, titre, desc_finale, prix, 'mois' if prix > 0 else 'negociable',\n                     cat_emploi['id'], ville_id, boutique_id,\n                     emploi_type, secteur, salaire_raw, 'active', expire_at))",
+    "                db.execute('''INSERT INTO annonces\n                    (slug,titre,description,prix,prix_type,categorie_id,ville_id,boutique_id,\n                     emploi_type,emploi_secteur,emploi_salaire,emploi_entreprise,statut,expire_at)\n                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',\n                    (aslug, titre, desc_finale, prix, 'mois' if prix > 0 else 'negociable',\n                     cat_emploi['id'], ville_id, boutique_id,\n                     emploi_type, secteur, salaire_raw, entreprise, 'active', expire_at))",
+    "ajoute emploi_entreprise a l'INSERT de deposer_emploi() avec la valeur du champ 'entreprise' du formulaire, au lieu de laisser le nom du recruteur dependre uniquement de la boutique partagee",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# database.py -- ajoute la colonne emploi_entreprise + rattrape les annonces
+# deja publiees le 26/07/2026 avec le mauvais recruteur affiche
+# ─────────────────────────────────────────────────────────────
+print("=== database.py (colonne emploi_entreprise + backfill) ===")
+path = 'database.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '        "ALTER TABLE annonces ADD COLUMN emploi_salaire TEXT",\n        "ALTER TABLE annonces ADD COLUMN expire_at DATETIME",',
+    '        "ALTER TABLE annonces ADD COLUMN emploi_salaire TEXT",\n        "ALTER TABLE annonces ADD COLUMN emploi_entreprise TEXT",\n        "ALTER TABLE annonces ADD COLUMN expire_at DATETIME",',
+    "ajoute la colonne annonces.emploi_entreprise (deja lue par annonce.html mais jamais creee en base)",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '    # Seed quartiers',
+    '    # Corrige l\'attribution recruteur des annonces emploi postees le 26/07/2026\n    # (colonne emploi_entreprise inexistante -> toutes affichaient le nom de la\n    # 1ere boutique creee sous le meme compte/telephone, soit "RENCO CONGO")\n    try:\n        _backfills_emploi_entreprise = [\n            (\'%soudeur%argoniste%\', \'RENCO CONGO\'),\n            (\'%agent commercial%\', \'Grands Moulins du Congo\'),\n            (\'%femme de chambre%\', \'H\\u00f4tel Saint Jean\'),\n            (\'%responsable qhse%\', \'Codisco Gibat\'),\n        ]\n        for _like, _entreprise in _backfills_emploi_entreprise:\n            c.execute(\n                "UPDATE annonces SET emploi_entreprise=? WHERE emploi_entreprise IS NULL AND lower(titre) LIKE ?",\n                (_entreprise, _like)\n            )\n    except Exception:\n        pass\n\n    # Seed quartiers',
+    "backfill ponctuel : corrige le recruteur affiche sur les 4 annonces emploi publiees le 26/07/2026 sous le meme compte, qui affichaient toutes RENCO CONGO par defaut faute de colonne dediee",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
