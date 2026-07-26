@@ -1917,6 +1917,64 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
+# ─────────────────────────────────────────────────────────────
+# app.py -- ajoute le mapping secteur annonce -> slug alertes_emploi,
+# et calcule pour chaque offre emploi active recente les abonnes
+# WhatsApp cibles (bon secteur + 'tous'), avec message pre-redige.
+# Demande par Dony : liste prete a copier-coller (pas d'API WhatsApp
+# Business payante pour l'instant).
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (mapping secteur + offres a diffuser dans /admin/alertes-emploi) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    'EMPLOI_SECTEURS = {\n    "transport-logistique": "Transport / Logistique",\n    "commerce-vente": "Commerce / Vente",\n    "secretariat-admin": "Secretariat / Admin",\n    "informatique-tech": "Informatique / Tech",\n    "btp-construction": "BTP / Construction",\n    "sante-medical": "Sante / Medical",\n    "enseignement-formation": "Enseignement / Formation",\n    "hotellerie-restauration": "Hotellerie / Restauration",\n    "finance-comptabilite": "Finance / Comptabilite",\n    "petrole-mines": "Petrole / Mines",\n    "securite-gardiennage": "Securite / Gardiennage",\n    "nettoyage-maintenance": "Nettoyage / Maintenance",\n}',
+    'EMPLOI_SECTEURS = {\n    "transport-logistique": "Transport / Logistique",\n    "commerce-vente": "Commerce / Vente",\n    "secretariat-admin": "Secretariat / Admin",\n    "informatique-tech": "Informatique / Tech",\n    "btp-construction": "BTP / Construction",\n    "sante-medical": "Sante / Medical",\n    "enseignement-formation": "Enseignement / Formation",\n    "hotellerie-restauration": "Hotellerie / Restauration",\n    "finance-comptabilite": "Finance / Comptabilite",\n    "petrole-mines": "Petrole / Mines",\n    "securite-gardiennage": "Securite / Gardiennage",\n    "nettoyage-maintenance": "Nettoyage / Maintenance",\n}\n\ndef _normalise_secteur_txt(txt):\n    if not txt:\n        return \'\'\n    txt = txt.lower()\n    for _a, _b in [(\'\\u00e9\',\'e\'),(\'\\u00e8\',\'e\'),(\'\\u00ea\',\'e\'),(\'\\u00e0\',\'a\'),(\'\\u00f4\',\'o\'),(\'\\u00fb\',\'u\'),(\'\\u00ee\',\'i\'),(\'\\u00e7\',\'c\')]:\n        txt = txt.replace(_a, _b)\n    return re.sub(r\'[^a-z0-9]+\', \'\', txt)\n\n_SECTEUR_ANNONCE_TO_SLUG = {_normalise_secteur_txt(_lbl): _slug for _slug, _lbl in EMPLOI_SECTEURS.items()}\n_SECTEUR_ANNONCE_TO_SLUG.update({\n    \'comptabilitefinance\': \'finance-comptabilite\',\n    \'educationformation\': \'enseignement-formation\',\n    \'securite\': \'securite-gardiennage\',\n})\n\ndef secteur_slug_depuis_annonce(txt):\n    return _SECTEUR_ANNONCE_TO_SLUG.get(_normalise_secteur_txt(txt))',
+    "ajoute la fonction secteur_slug_depuis_annonce() qui normalise le libelle secteur saisi sur /deposer-emploi pour le faire correspondre au slug utilise par les inscriptions alertes_emploi",
+)
+changed = changed or ch
+
+c, ch = apply_patch(
+    c,
+    '@app.route(\'/admin/alertes-emploi\')\ndef admin_alertes_emploi():\n    if not session.get(\'is_admin\'):\n        return redirect(\'/admin\')\n    db = get_db()\n    alertes = db.execute("""\n        SELECT secteur, COUNT(*) as nb, GROUP_CONCAT(whatsapp, \'||\') as numeros\n        FROM alertes_emploi WHERE actif=1\n        GROUP BY secteur ORDER BY nb DESC\n    """).fetchall()\n    total = db.execute(\'SELECT COUNT(*) as n FROM alertes_emploi WHERE actif=1\').fetchone()[\'n\']\n    recent = db.execute(\'SELECT * FROM alertes_emploi ORDER BY created_at DESC LIMIT 20\').fetchall()\n    db.close()\n    return render_template(\'pages/admin_alertes_emploi.html\', alertes=alertes, total=total, recent=recent)',
+    '@app.route(\'/admin/alertes-emploi\')\ndef admin_alertes_emploi():\n    if not session.get(\'is_admin\'):\n        return redirect(\'/admin\')\n    db = get_db()\n    alertes = db.execute("""\n        SELECT secteur, COUNT(*) as nb, GROUP_CONCAT(whatsapp, \'||\') as numeros\n        FROM alertes_emploi WHERE actif=1\n        GROUP BY secteur ORDER BY nb DESC\n    """).fetchall()\n    total = db.execute(\'SELECT COUNT(*) as n FROM alertes_emploi WHERE actif=1\').fetchone()[\'n\']\n    recent = db.execute(\'SELECT * FROM alertes_emploi ORDER BY created_at DESC LIMIT 20\').fetchall()\n    offres_a_diffuser = []\n    cat_emploi_oad = db.execute(\'SELECT id FROM categories WHERE slug="emploi"\').fetchone()\n    if cat_emploi_oad:\n        _offres = db.execute("""\n            SELECT a.slug, a.titre, a.emploi_secteur, a.created_at, v.nom as ville_nom\n            FROM annonces a JOIN villes v ON a.ville_id=v.id\n            WHERE a.categorie_id=? AND a.statut=\'active\'\n            ORDER BY a.created_at DESC LIMIT 10\n        """, (cat_emploi_oad[\'id\'],)).fetchall()\n        for _o in _offres:\n            _slug_secteur = secteur_slug_depuis_annonce(_o[\'emploi_secteur\']) or \'__aucun__\'\n            _nums = db.execute(\n                "SELECT DISTINCT whatsapp FROM alertes_emploi WHERE actif=1 AND (secteur=\'tous\' OR secteur=?)",\n                (_slug_secteur,)\n            ).fetchall()\n            _numeros = sorted({n[\'whatsapp\'] for n in _nums})\n            _msg = f"Bonjour ! Nouvelle offre sur helloBiz : {_o[\'titre\']} - {_o[\'ville_nom\']} - https://hellobizcongo.com/annonce/{_o[\'slug\']}"\n            offres_a_diffuser.append({\n                \'titre\': _o[\'titre\'], \'slug\': _o[\'slug\'], \'ville_nom\': _o[\'ville_nom\'],\n                \'created_at\': _o[\'created_at\'], \'nb\': len(_numeros),\n                \'numeros\': \', \'.join(_numeros), \'message\': _msg,\n            })\n    db.close()\n    return render_template(\'pages/admin_alertes_emploi.html\', alertes=alertes, total=total, recent=recent, offres_a_diffuser=offres_a_diffuser)',
+    "admin_alertes_emploi() calcule desormais offres_a_diffuser : pour chaque offre emploi active recente, le nombre et la liste des abonnes WhatsApp cibles + un message pret a l'emploi",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
+# ─────────────────────────────────────────────────────────────
+# templates/pages/admin_alertes_emploi.html -- affiche la section
+# "Offres a diffuser" : message pret + bouton copier message/numeros
+# + lien direct wa.me, pour chaque offre emploi active recente.
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/admin_alertes_emploi.html (offres a diffuser) ===")
+path = 'templates/pages/admin_alertes_emploi.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '  {% if alertes %}\n  <h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Par secteur</h2>',
+    '  {% if offres_a_diffuser %}\n  <h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Offres a diffuser</h2>\n  {% for o in offres_a_diffuser %}\n  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">\n    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">\n      <span style="font-weight:700">{{ o.titre }}</span>\n      <span style="color:var(--text-muted);font-size:12px">{{ o.ville_nom }} - {{ o.created_at[:10] }} - {{ o.nb }} abonne(s) cible(s)</span>\n    </div>\n    <textarea readonly id="msg-{{ loop.index }}" style="width:100%;min-height:50px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg-secondary);color:var(--text);margin-bottom:8px">{{ o.message }}</textarea>\n    <textarea readonly id="nums-{{ loop.index }}" style="position:absolute;left:-9999px">{{ o.numeros }}</textarea>\n    <div style="display:flex;gap:8px;flex-wrap:wrap">\n      <a href="https://wa.me/?text={{ o.message|urlencode }}" target="_blank" style="display:inline-block;background:#25D366;color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">Ouvrir dans WhatsApp</a>\n      <button type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'msg-{{ loop.index }}\').value);this.textContent=\'Copie !\';setTimeout(()=>this.textContent=\'Copier le message\',1500)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copier le message</button>\n      <button type="button" onclick="navigator.clipboard.writeText(document.getElementById(\'nums-{{ loop.index }}\').value);this.textContent=\'Copie !\';setTimeout(()=>this.textContent=\'Copier les numeros ({{ o.nb }})\',1500)" style="background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Copier les numeros ({{ o.nb }})</button>\n    </div>\n  </div>\n  {% endfor %}\n  {% endif %}\n  {% if alertes %}\n  <h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Par secteur</h2>',
+    "ajoute la section Offres a diffuser avant le detail par secteur",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
