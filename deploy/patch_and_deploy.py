@@ -1780,6 +1780,38 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
+# ─────────────────────────────────────────────────────────────
+# Diagnostic temporaire (lecture seule) : boutiques actives sans annonce active
+# ─────────────────────────────────────────────────────────────
+print("=== DIAG boutiques sans annonce ===")
+try:
+    import sqlite3, tempfile, os as _os
+    _db_url = f"{API_BASE}/files/path{APP_ROOT}/data/marketplace.db"
+    r = requests.get(_db_url, headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    _tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+    _tmp.write(r.content)
+    _tmp.close()
+    _conn = sqlite3.connect(_tmp.name)
+    _cur = _conn.cursor()
+    _cur.execute("""
+        SELECT b.nom, b.slug, b.created_at
+        FROM boutiques b
+        LEFT JOIN annonces a ON a.boutique_id=b.id AND a.statut='active'
+        WHERE b.actif=1
+        GROUP BY b.id
+        HAVING COUNT(a.id)=0
+        ORDER BY b.created_at DESC
+    """)
+    _rows = _cur.fetchall()
+    print(f"::warning::[DIAG boutiques vides] {len(_rows)} boutique(s) active(s) sans annonce active")
+    for _nom, _slug, _created in _rows[:60]:
+        print(f"::warning::[DIAG boutique vide] {_nom} | /boutique/{_slug} | creee {_created}")
+    _conn.close()
+    _os.unlink(_tmp.name)
+except Exception as e:
+    print(f"::warning::[DIAG boutiques vides] exception: {e}")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
