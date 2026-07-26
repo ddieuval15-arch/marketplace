@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Blog helloBiz — Conseils business à Pointe-Noire{% endblock %}
+{% block meta %}
+<meta name="description" content="Conseils, guides et actualités pour les vendeurs et acheteurs à Pointe-Noire, Congo. helloBiz, la marketplace locale.">
+<meta property="og:title" content="Blog helloBiz — Conseils business à Pointe-Noire">
+<meta property="og:description" content="Conseils, guides et actualités pour développer votre activité à Pointe-Noire.">
+{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:32px 16px">
+  <div style="text-align:center;margin-bottom:40px">
+    <h1 style="font-size:2rem;font-weight:800;color:var(--dark);margin-bottom:8px">Le Blog helloBiz</h1>
+    <p style="color:#6b7280;font-size:1.05rem">Conseils, guides et actualités pour réussir à Pointe-Noire</p>
+  </div>
+
+  {% if categories %}
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;justify-content:center">
+    <a href="/blog" style="padding:6px 16px;border-radius:20px;background:var(--primary);color:#fff;font-size:13px;text-decoration:none">Tous</a>
+    {% for cat in categories %}
+    <a href="/blog?cat={{ cat.categorie }}" style="padding:6px 16px;border-radius:20px;background:#f3f4f6;color:#374151;font-size:13px;text-decoration:none;border:1px solid #e5e7eb">{{ cat.categorie|capitalize }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if articles %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px">
+    {% for a in articles %}
+    <article style="background:#fff;border-radius:12px;box-shadow:0 1px 8px rgba(0,0,0,.08);overflow:hidden;transition:transform .2s" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='none'">
+      {% if a.image_url %}
+      <img src="{{ a.image_url }}" alt="{{ a.titre }}" style="width:100%;height:180px;object-fit:cover">
+      {% else %}
+      <div style="width:100%;height:180px;background:linear-gradient(135deg,var(--primary),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:48px">📝</div>
+      {% endif %}
+      <div style="padding:20px">
+        <span style="font-size:11px;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:.5px">{{ a.categorie }}</span>
+        <h2 style="font-size:1.1rem;font-weight:700;color:var(--dark);margin:8px 0;line-height:1.4">
+          <a href="/blog/{{ a.slug }}" style="text-decoration:none;color:inherit">{{ a.titre }}</a>
+        </h2>
+        {% if a.chapeau %}
+        <p style="color:#6b7280;font-size:14px;line-height:1.6;margin-bottom:16px">{{ a.chapeau[:120] }}{% if a.chapeau|length > 120 %}…{% endif %}</p>
+        {% endif %}
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;color:#9ca3af">{{ a.created_at[:10] }} · {{ a.vues }} vues</span>
+          <a href="/blog/{{ a.slug }}" style="font-size:13px;font-weight:600;color:var(--primary);text-decoration:none">Lire →</a>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px 20px;color:#6b7280">
+    <div style="font-size:48px;margin-bottom:16px">✍️</div>
+    <p>Aucun article publié pour le moment. Revenez bientôt !</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
