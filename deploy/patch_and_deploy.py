@@ -1806,6 +1806,35 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
+# ─────────────────────────────────────────────────────────────
+# app.py -- corrige le crash (NameError) sur /deposer-emploi
+# quartier_id etait utilise sans jamais avoir ete defini dans cette route
+# (code mort, copie-colle d'une autre route, jamais utilise dans l'INSERT
+# qui suit) -- provoquait un plantage 500 sur TOUTE soumission valide du
+# formulaire, empechant la publication de toute offre d'emploi depuis le
+# lancement de la fonctionnalite. Explique le "0 offres disponibles" sur
+# /emploi malgre les recherches "emploi pointe noire" qui sont le
+# principal levier SEO du site (diagnostic du 26/07/2026).
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (corrige le crash /deposer-emploi) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    "                aslug = unique_slug(db, 'annonces', slugify(titre))\n                import datetime as _dt\n                expire_at = (_dt.datetime.now() + _dt.timedelta(days=60)).strftime('%Y-%m-%d %H:%M:%S')\n                quartier_libre = request.form.get('quartier_libre', '').strip() or None\n                if str(quartier_id) == 'autre':\n                    quartier_id = None\n                db.execute('''INSERT INTO annonces\n                    (slug,titre,description,prix,prix_type,categorie_id,ville_id,boutique_id,\n                     emploi_type,emploi_secteur,emploi_salaire,statut,expire_at)\n                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',",
+    "                aslug = unique_slug(db, 'annonces', slugify(titre))\n                import datetime as _dt\n                expire_at = (_dt.datetime.now() + _dt.timedelta(days=60)).strftime('%Y-%m-%d %H:%M:%S')\n                db.execute('''INSERT INTO annonces\n                    (slug,titre,description,prix,prix_type,categorie_id,ville_id,boutique_id,\n                     emploi_type,emploi_secteur,emploi_salaire,statut,expire_at)\n                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',",
+    "retire les 2 lignes mortes (quartier_libre / quartier_id) qui provoquaient un NameError sur toute soumission valide de /deposer-emploi -- ces variables n'etaient meme pas utilisees dans l'INSERT qui suit, code mort copie-colle depuis une autre route",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
