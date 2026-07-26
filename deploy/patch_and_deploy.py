@@ -1893,6 +1893,30 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
+# ─────────────────────────────────────────────────────────────
+# templates/pages/emploi.html -- meme bug que la fiche annonce : la carte
+# listing utilisait boutique_nom (partage entre toutes les offres postees
+# sous le meme compte) au lieu de emploi_entreprise (le vrai recruteur).
+# ─────────────────────────────────────────────────────────────
+print("=== templates/pages/emploi.html (carte listing : vrai recruteur) ===")
+path = 'templates/pages/emploi.html'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    """                {% if a.boutique_nom %}<strong style="color:var(--text)">{{ a.boutique_nom }}</strong> · {% endif %}""",
+    """                {% if a.emploi_entreprise %}<strong style="color:var(--text)">{{ a.emploi_entreprise }}</strong> · {% elif a.boutique_nom %}<strong style="color:var(--text)">{{ a.boutique_nom }}</strong> · {% endif %}""",
+    "carte listing /emploi : affiche emploi_entreprise (le vrai recruteur) au lieu du nom de boutique partage entre toutes les offres du meme compte",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
