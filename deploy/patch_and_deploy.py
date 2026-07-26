@@ -1780,6 +1780,32 @@ if changed:
 else:
     print("  -> aucun changement necessaire")
 
+# ─────────────────────────────────────────────────────────────
+# app.py -- exclut du sitemap.xml les boutiques actives sans annonce active
+# (97 boutiques concernees : pages quasi vides qui diluent la confiance
+# de Google et freinent l'indexation du reste du site -- diagnostic du
+# 26/07/2026). Se remet a jour automatiquement des qu'une boutique publie
+# sa premiere annonce -- aucune liste manuelle a maintenir.
+# ─────────────────────────────────────────────────────────────
+print("=== app.py (exclut les boutiques vides du sitemap) ===")
+path = 'app.py'
+c = get_file(path)
+changed = False
+
+c, ch = apply_patch(
+    c,
+    '    annonces = db.execute(\'SELECT slug, created_at FROM annonces WHERE statut="active"\').fetchall()\n    boutiques = db.execute(\'SELECT slug, created_at FROM boutiques WHERE actif=1\').fetchall()',
+    '    annonces = db.execute(\'SELECT slug, created_at FROM annonces WHERE statut="active"\').fetchall()\n    boutiques = db.execute(\'\'\'\n        SELECT b.slug, b.created_at FROM boutiques b\n        WHERE b.actif=1 AND EXISTS (\n            SELECT 1 FROM annonces a WHERE a.boutique_id=b.id AND a.statut=\'active\'\n        )\n    \'\'\').fetchall()',
+    "le sitemap.xml n'inclut desormais que les boutiques actives ayant au moins une annonce active (EXISTS), au lieu de toutes les boutiques actives -- exclut les 97 boutiques vides identifiees qui nuisaient a l'indexation Google",
+)
+changed = changed or ch
+
+if changed:
+    put_file(path, c)
+    print("  -> fichier mis a jour sur le serveur")
+else:
+    print("  -> aucun changement necessaire")
+
 # --- Snapshot temporaire du app.py / database.py reellement en ligne ---
 # Ecrit le contenu live dans des fichiers locaux du checkout, qui seront
 # commit/push par l'etape suivante du workflow -- permet de les lire
