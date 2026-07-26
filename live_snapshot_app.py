@@ -672,11 +672,11 @@ def deposer_emploi():
                 expire_at = (_dt.datetime.now() + _dt.timedelta(days=60)).strftime('%Y-%m-%d %H:%M:%S')
                 db.execute('''INSERT INTO annonces
                     (slug,titre,description,prix,prix_type,categorie_id,ville_id,boutique_id,
-                     emploi_type,emploi_secteur,emploi_salaire,statut,expire_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                     emploi_type,emploi_secteur,emploi_salaire,emploi_entreprise,statut,expire_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                     (aslug, titre, desc_finale, prix, 'mois' if prix > 0 else 'negociable',
                      cat_emploi['id'], ville_id, boutique_id,
-                     emploi_type, secteur, salaire_raw, 'active', expire_at))
+                     emploi_type, secteur, salaire_raw, entreprise, 'active', expire_at))
                 db.commit()
                 db.close()
                 flash('Votre annonce est en ligne !', 'success')
